@@ -18,7 +18,7 @@ public class EditorTab extends JPanel {
 	private EditorContainer editorContainer;
 	private String title;
 	
-	public EditorTab(String title) {
+	public EditorTab(String title, FileType type) {
 		super(new BorderLayout());
 		
 		this.title = title;
@@ -30,27 +30,21 @@ public class EditorTab extends JPanel {
 		
 		Editor editor = editorContainer.getEditorPane().getEditor();
 		
-		if(title.contains(".")) {
-			String extension = title.substring(title.indexOf("."));
-			
-			FileType type = FileType.findByExtension(extension);
-			
-			switch(type) {
-				case XML -> {
-					editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
-				}
-				case HTML -> {
-					editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_HTML);
-				}
-				case TXT -> {
-					editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
-				}
-				case JSON -> {
-					editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
-				}
+		if(type == null) type = FileType.TXT;
+		
+		switch(type) {
+			case XML, XSL, XSLT -> {
+				editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
 			}
-		} else {
-			editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
+			case HTML -> {
+				editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_HTML);
+			}
+			case JSON -> {
+				editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
+			}
+			default -> {
+				editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
+			}
 		}
 	}
 	

@@ -1,9 +1,11 @@
 package github.tdonuk.notemanager.gui.container;
 
 import github.tdonuk.notemanager.constant.Application;
+import github.tdonuk.notemanager.constant.FileType;
 import github.tdonuk.notemanager.gui.component.PrimaryLabel;
 import github.tdonuk.notemanager.gui.event.CommonEventListeners;
 import lombok.Getter;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -35,7 +37,17 @@ public class EditorTabPane extends JTabbedPane {
 			titleToShow = title + " (" + (++index) + ")";
 		}
 		
-		EditorTab editorTab = new EditorTab(titleToShow);
+		FileType type;
+		
+		if(title.contains(".")) {
+			String extension = title.substring(title.indexOf("."));
+			
+			type = FileType.findByExtension(extension);
+		} else {
+			type = null;
+		}
+		
+		EditorTab editorTab = new EditorTab(titleToShow, type);
 		
 		tabs.add(editorTab);
 		this.addTab(titleToShow, editorTab);
@@ -55,6 +67,10 @@ public class EditorTabPane extends JTabbedPane {
 	
 	public void setSelectedTab(EditorTab tab) {
 		this.setSelectedIndex(this.indexOfComponent(tab));
+	}
+	
+	public void setSelectedTab(String title) {
+		this.setSelectedIndex(this.indexOfTab(title));
 	}
 	
 	public boolean exists(String title) {

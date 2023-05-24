@@ -3,7 +3,7 @@ package github.tdonuk.notemanager.constant;
 import java.util.Arrays;
 
 public enum FileType {
-	XML(".xml"), HTML(".html"), TXT(".txt"), JSON(".json");
+	XML(".xml"), HTML(".html"), TXT(".txt"), JSON(".json"), XSL(".xsl"), XSLT(".xslt");
 	
 	private final String extension;
 	

@@ -131,7 +131,8 @@ public final class MainWindow extends JFrame {
 		
 		menuItemNew = new JMenuItem("New");
 		menuItemNew.addActionListener(e -> {
-			editorTabs.addTab("New Document");
+			EditorTab tab = editorTabs.addTab("New Document");
+			editorTabs.setSelectedTab(tab);
 		});
 		
 		menuItemOpen = new JMenuItem("Open");
