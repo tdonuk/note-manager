@@ -7,7 +7,7 @@ import java.awt.*;
 
 @Getter
 public class EditorContainer extends JPanel {
-	private EditorScrollPane editorPane;
+	private final EditorScrollPane editorPane;
 	
 	public EditorContainer() {
 		super(new BorderLayout());
