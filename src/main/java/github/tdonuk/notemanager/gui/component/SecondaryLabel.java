@@ -1,7 +1,7 @@
-package gui.component;
+package github.tdonuk.notemanager.gui.component;
 
-import constant.Application;
-import gui.theme.PaletteHolder;
+import github.tdonuk.notemanager.constant.Application;
+import github.tdonuk.notemanager.gui.theme.PaletteHolder;
 
 import javax.swing.*;
 
@@ -10,6 +10,5 @@ public class SecondaryLabel extends JLabel {
 		super(text);
 		
 		this.setFont(Application.SECONDARY_FONT);
-		this.setForeground(PaletteHolder.SECONDARY_FOREGROUND.getValue());
 	}
 }

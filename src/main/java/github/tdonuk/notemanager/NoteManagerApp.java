@@ -1,4 +1,6 @@
-import gui.MainWindow;
+package github.tdonuk.notemanager;
+
+import github.tdonuk.notemanager.gui.MainWindow;
 
 import javax.swing.*;
 

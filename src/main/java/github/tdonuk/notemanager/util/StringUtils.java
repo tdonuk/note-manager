@@ -1,4 +1,4 @@
-package util;
+package github.tdonuk.notemanager.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -12,7 +12,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.awt.*;
 import java.io.File;
 import java.io.StringReader;
 import java.io.StringWriter;

@@ -1,13 +1,11 @@
-package util;
+package github.tdonuk.notemanager.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.StringJoiner;
-import java.util.logging.Logger;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class LoggingUtils {

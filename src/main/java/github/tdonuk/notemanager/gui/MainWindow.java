@@ -1,37 +1,78 @@
-package gui;
+package github.tdonuk.notemanager.gui;
 
-import constant.Application;
-import gui.component.Editor;
-import gui.component.SecondaryButton;
-import gui.component.SecondaryLabel;
-import gui.container.EditorTab;
-import gui.container.EditorTabPane;
-import gui.container.PrimaryPanel;
-import gui.container.SecondaryPanel;
-import util.DialogUtils;
-import util.EnvironmentUtils;
-import util.StringUtils;
+import github.tdonuk.notemanager.constant.Application;
+import github.tdonuk.notemanager.gui.component.Editor;
+import github.tdonuk.notemanager.gui.component.SecondaryLabel;
+import github.tdonuk.notemanager.gui.container.EditorTab;
+import github.tdonuk.notemanager.gui.container.EditorTabPane;
+import github.tdonuk.notemanager.gui.container.PrimaryPanel;
+import github.tdonuk.notemanager.gui.container.SecondaryPanel;
+import github.tdonuk.notemanager.util.DialogUtils;
+import github.tdonuk.notemanager.util.EnvironmentUtils;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.text.*;
 import java.awt.*;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public final class MainWindow extends JFrame {
 	private static MainWindow instance;
 	
 	private MainWindow() {
+		this.setSize(3*EnvironmentUtils.screenWidth()/4, 3*EnvironmentUtils.screenHeight()/4);
+		this.setLocationRelativeTo(null); // to create the window at the center of the screen
+		this.setTitle(Application.NAME);
+		this.setFont(Application.PRIMARY_FONT);
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
 		init();
+		
+		this.addWindowListener(new WindowListener() {
+			@Override
+			public void windowOpened(WindowEvent e) {
+				System.out.println("app started");
+				
+				editorTabs.getTabs().get(0).getEditorContainer().getEditorPane().getEditor().requestFocus(); // open window as focused to editor and ready-to-write
+			}
+			
+			@Override
+			public void windowClosing(WindowEvent e) {
+				System.out.println("main window is closing");
+			}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				System.out.println("main window closed");
+			}
+			
+			@Override
+			public void windowIconified(WindowEvent e) {
+				System.out.println("app iconified");
+			}
+			
+			@Override
+			public void windowDeiconified(WindowEvent e) {
+				System.out.println("app de-iconified");
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e) {
+				System.out.println("main window activated");
+			}
+			
+			@Override
+			public void windowDeactivated(WindowEvent e) {
+				System.out.println("main window deactivated");
+			}
+		});
 	}
 	
 	private JMenuBar menuBar;
+	
 	private JMenu fileMenu;
+	
 	private JMenuItem menuItemNew, menuItemOpen;
 	
 	private JPanel mainPanel, eastPanel, westPanel, northPanel, southPanel, centerPanel;
@@ -39,12 +80,6 @@ public final class MainWindow extends JFrame {
 	private EditorTabPane editorTabs;
 	
 	private void init() {
-		this.setSize(3*EnvironmentUtils.screenWidth()/4, 3*EnvironmentUtils.screenHeight()/4);
-		this.setLocationRelativeTo(null);
-		this.setTitle(Application.NAME);
-		this.setFont(Application.PRIMARY_FONT);
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		
 		mainPanel = new PrimaryPanel(new BorderLayout());
 		
 		this.setContentPane(mainPanel);
@@ -60,20 +95,15 @@ public final class MainWindow extends JFrame {
 	private void initCenterPanel() {
 		centerPanel = new SecondaryPanel(new BorderLayout());
 		centerPanel.setBorder(null);
-		
-		// top level containers
+
 		editorTabs = new EditorTabPane();
 		
 		centerPanel.add(editorTabs);
 		
 		mainPanel.add(centerPanel, BorderLayout.CENTER);
-		
-		editorTabs.getTabs().get(0).getEditorContainer().getEditorPane().getEditor().requestFocus();
 	}
 	
 	private void initSouthPanel() {
-		southPanel = new PrimaryPanel();
-		
 		southPanel = new PrimaryPanel(new BorderLayout());
 		southPanel.setBorder(null);
 		

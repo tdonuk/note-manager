@@ -1,6 +1,6 @@
-package gui.component;
+package github.tdonuk.notemanager.gui.component;
 
-import constant.Application;
+import github.tdonuk.notemanager.constant.Application;
 
 import javax.swing.*;
 

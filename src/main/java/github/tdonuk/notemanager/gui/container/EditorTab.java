@@ -1,9 +1,10 @@
-package gui.container;
+package github.tdonuk.notemanager.gui.container;
 
-import constant.FileType;
-import gui.container.EditorContainer;
-import gui.theme.PaletteHolder;
+import github.tdonuk.notemanager.constant.FileType;
+import github.tdonuk.notemanager.gui.component.Editor;
 import lombok.Getter;
+import lombok.Setter;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +13,7 @@ import java.awt.*;
  * Represents the tabs of the tabbed pane
  */
 @Getter
+@Setter
 public class EditorTab extends JPanel {
 	private EditorContainer editorContainer;
 	private String title;
@@ -25,6 +27,31 @@ public class EditorTab extends JPanel {
 		
 		this.editorContainer = new EditorContainer();
 		this.add(editorContainer);
+		
+		Editor editor = editorContainer.getEditorPane().getEditor();
+		
+		if(title.contains(".")) {
+			String extension = title.substring(title.indexOf("."));
+			
+			FileType type = FileType.findByExtension(extension);
+			
+			switch(type) {
+				case XML -> {
+					editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
+				}
+				case HTML -> {
+					editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_HTML);
+				}
+				case TXT -> {
+					editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
+				}
+				case JSON -> {
+					editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
+				}
+			}
+		} else {
+			editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
+		}
 	}
 	
 	public FileType getFileType() {
@@ -32,6 +59,5 @@ public class EditorTab extends JPanel {
 		
 		return FileType.findByExtension(title.substring(title.indexOf(".")+1));
 	}
-	
 	
 }

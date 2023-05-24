@@ -1,6 +1,5 @@
-package gui.container;
+package github.tdonuk.notemanager.gui.container;
 
-import gui.component.Editor;
 import lombok.Getter;
 
 import javax.swing.*;
@@ -12,8 +11,6 @@ public class EditorContainer extends JPanel {
 	
 	public EditorContainer() {
 		super(new BorderLayout());
-		
-		// this.setBackground(PaletteHolder.SECONDARY_BACKGROUND.getValue());
 		
 		this.editorPane = new EditorScrollPane();
 		

@@ -1,4 +1,4 @@
-package gui.theme;
+package github.tdonuk.notemanager.gui.theme;
 
 import java.awt.*;
 

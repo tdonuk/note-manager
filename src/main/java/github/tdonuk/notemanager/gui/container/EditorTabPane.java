@@ -1,18 +1,13 @@
-package gui.container;
+package github.tdonuk.notemanager.gui.container;
 
-import constant.Application;
-import gui.component.PrimaryLabel;
-import gui.component.SecondaryLabel;
-import gui.container.EditorTab;
-import gui.event.CommonEventListeners;
-import gui.theme.PaletteHolder;
+import github.tdonuk.notemanager.constant.Application;
+import github.tdonuk.notemanager.gui.component.PrimaryLabel;
+import github.tdonuk.notemanager.gui.event.CommonEventListeners;
 import lombok.Getter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 

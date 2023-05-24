@@ -1,6 +1,6 @@
-package constant;
+package github.tdonuk.notemanager.constant;
 
-import gui.theme.ApplicationTheme;
+import github.tdonuk.notemanager.gui.theme.ApplicationTheme;
 
 import java.awt.*;
 

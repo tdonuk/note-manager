@@ -1,4 +1,4 @@
-package gui.event;
+package github.tdonuk.notemanager.gui.event;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

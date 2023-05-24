@@ -1,6 +1,4 @@
-package gui.container;
-
-import gui.theme.PaletteHolder;
+package github.tdonuk.notemanager.gui.container;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

@@ -1,4 +1,4 @@
-package util;
+package github.tdonuk.notemanager.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

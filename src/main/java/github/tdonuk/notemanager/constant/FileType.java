@@ -1,11 +1,23 @@
-package constant;
+package github.tdonuk.notemanager.constant;
+
+import java.util.Arrays;
 
 public enum FileType {
-	XML, HTML, TXT;
+	XML(".xml"), HTML(".html"), TXT(".txt"), JSON(".json");
+	
+	private final String extension;
+	
+	public String getExtension() {
+		return extension;
+	}
+	
+	FileType(String extension) {
+		this.extension = extension;
+	}
 	
 	public static FileType findByExtension(String extension) {
 		try {
-			return valueOf(extension.toUpperCase());
+			return Arrays.stream(values()).filter(v -> v.getExtension().equals(extension)).findAny().orElse(TXT);
 		} catch(Exception e) {
 			return TXT;
 		}

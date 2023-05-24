@@ -1,17 +1,12 @@
-package gui.container;
+package github.tdonuk.notemanager.gui.container;
 
-import gui.component.Editor;
-import gui.theme.PaletteHolder;
+import github.tdonuk.notemanager.gui.component.Editor;
 import lombok.Getter;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-import javax.swing.*;
-import javax.swing.text.DefaultStyledDocument;
-import java.awt.*;
-
 @Getter
 public class EditorScrollPane extends RTextScrollPane {
-	private Editor editor;
+	private final Editor editor;
 	
 	public EditorScrollPane() {
 		super();
