@@ -3,10 +3,17 @@ package github.tdonuk.notemanager;
 import github.tdonuk.notemanager.gui.MainWindow;
 
 import javax.swing.*;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 public class NoteManagerApp {
 	public static void main(String[] args) throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-		UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+		for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+			System.out.println(info.getName());
+			if ("Windows Classic".equals(info.getName())) { // Gui style
+				UIManager.setLookAndFeel(info.getClassName());
+				break;
+			}
+		}
 		MainWindow.getInstance().setVisible(true);
 	}
 }
