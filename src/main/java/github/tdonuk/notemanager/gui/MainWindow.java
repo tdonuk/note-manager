@@ -2,11 +2,9 @@ package github.tdonuk.notemanager.gui;
 
 import github.tdonuk.notemanager.constant.Application;
 import github.tdonuk.notemanager.gui.component.Editor;
-import github.tdonuk.notemanager.gui.component.SecondaryLabel;
 import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.gui.container.EditorTabPane;
-import github.tdonuk.notemanager.gui.container.PrimaryPanel;
-import github.tdonuk.notemanager.gui.container.SecondaryPanel;
+import github.tdonuk.notemanager.gui.container.Panel;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
 
@@ -80,7 +78,7 @@ public final class MainWindow extends JFrame {
 	private EditorTabPane editorTabs;
 	
 	private void init() {
-		mainPanel = new PrimaryPanel(new BorderLayout());
+		mainPanel = new Panel(new BorderLayout());
 		
 		this.setContentPane(mainPanel);
 		
@@ -93,7 +91,7 @@ public final class MainWindow extends JFrame {
 	}
 	
 	private void initCenterPanel() {
-		centerPanel = new SecondaryPanel(new BorderLayout());
+		centerPanel = new Panel(new BorderLayout());
 		centerPanel.setBorder(null);
 
 		editorTabs = new EditorTabPane();
@@ -104,25 +102,27 @@ public final class MainWindow extends JFrame {
 	}
 	
 	private void initSouthPanel() {
-		southPanel = new PrimaryPanel(new BorderLayout());
+		southPanel = new Panel(new BorderLayout());
 		southPanel.setBorder(null);
 		
-		southPanel.add(new SecondaryLabel("v"+Application.VERSION), BorderLayout.WEST);
-		southPanel.add(new SecondaryLabel(EnvironmentUtils.osName() + " ("+EnvironmentUtils.osArch()+")"), BorderLayout.EAST);
+		southPanel.add(new Label("v"+Application.VERSION), BorderLayout.WEST);
+		southPanel.add(new Label(EnvironmentUtils.osName() + " ("+EnvironmentUtils.osArch()+")"), BorderLayout.EAST);
+
+		southPanel.setFont(Application.SECONDARY_FONT);
 		
 		mainPanel.add(southPanel, BorderLayout.SOUTH);
 	}
 	
 	private void initNorthPanel() {
-		northPanel = new PrimaryPanel();
+		northPanel = new Panel();
 	}
 	
 	private void initWestPanel() {
-		westPanel = new PrimaryPanel();
+		westPanel = new Panel();
 	}
 	
 	private void initEastPanel() {
-		eastPanel = new PrimaryPanel();
+		eastPanel = new Panel();
 	}
 	
 	private void initMenus() {
@@ -144,7 +144,7 @@ public final class MainWindow extends JFrame {
 			try {
 				content = Files.readAllBytes(file.toPath());
 				
-				EditorTab tab = editorTabs.addTab(file.getName());
+				EditorTab tab = editorTabs.addTab(file);
 				
 				Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
 				

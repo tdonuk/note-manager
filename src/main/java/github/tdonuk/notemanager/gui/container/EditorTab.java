@@ -8,6 +8,10 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.io.File;
+import java.nio.file.Files;
 
 /**
  * Represents the tabs of the tabbed pane
@@ -16,42 +20,60 @@ import java.awt.*;
 @Setter
 public class EditorTab extends JPanel {
 	private EditorContainer editorContainer;
+
 	private String title;
+	private FileType type;
+	private File openedFile;
 	
-	public EditorTab(String title, FileType type) {
+	public EditorTab(File file) {
 		super(new BorderLayout());
 		
-		this.title = title;
+		this.title = file.getName();
+		this.openedFile = file;
+
+		init();
+
+		if(title.contains(".")) {
+			type = FileType.findByExtension(title.substring(title.lastIndexOf(".")));
+		} else type = FileType.TXT;
 		
-		// this.setBackground(PaletteHolder.SECONDARY_BACKGROUND.getValue());
-		
-		this.editorContainer = new EditorContainer();
-		this.add(editorContainer);
-		
-		Editor editor = editorContainer.getEditorPane().getEditor();
-		
-		if(type == null) type = FileType.TXT;
-		
-		switch(type) {
-			case XML, XSL, XSLT -> {
-				editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
-			}
-			case HTML -> {
-				editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_HTML);
-			}
-			case JSON -> {
-				editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
-			}
-			default -> {
-				editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
-			}
-		}
+		determineSyntaxHighlighting();
+	}
+
+	public EditorTab(String tabName) {
+		super(new BorderLayout());
+
+		this.title = tabName;
+
+		init();
 	}
 	
-	public FileType getFileType() {
-		if(!title.contains(".")) return FileType.TXT;
-		
-		return FileType.findByExtension(title.substring(title.indexOf(".")+1));
+	private void determineSyntaxHighlighting() {
+		Editor editor = editorContainer.getEditorPane().getEditor();
+
+		switch(type) {
+			case XML, XSL, XSLT -> editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
+			case HTML -> editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_HTML);
+			case JSON -> editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
+			default -> editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
+		}
+	}
+
+	private void init() {
+		this.editorContainer = new EditorContainer();
+		this.add(editorContainer);
+
+		this.addFocusListener(new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				System.out.println("tab opened: " + title);
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				System.out.println("tab closed: " + title);
+			}
+		});
 	}
 	
 }
