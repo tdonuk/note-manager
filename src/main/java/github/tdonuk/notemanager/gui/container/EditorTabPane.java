@@ -1,6 +1,7 @@
 package github.tdonuk.notemanager.gui.container;
 
 import github.tdonuk.notemanager.constant.Application;
+import github.tdonuk.notemanager.gui.constant.EditorShortcut;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -8,6 +9,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -74,11 +76,20 @@ public class EditorTabPane extends JTabbedPane {
 		
 		setTabComponentAt(indexOfComponent(added), ((EditorTab) added).getHeader());
 		
+		((EditorTab) added).registerKeyboardAction(new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				remove(indexOfComponent(added));
+			}
+		}, EditorShortcut.CLOSE.getKeyStroke(), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		
 		return added;
 	}
 	
 	@Override
 	public void remove(int index) {
+		if(tabs.size() < 2) return;
+		
 		EditorTab toDelete = (EditorTab) getComponentAt(index);
 		
 		super.remove(index);

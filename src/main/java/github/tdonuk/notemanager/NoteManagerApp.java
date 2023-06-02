@@ -7,7 +7,7 @@ import javax.swing.*;
 public class NoteManagerApp {
 	public static void main(String[] args) throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
 		for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-			// System.out.println(info.getName()); // to see all look and feel alternatives
+			//System.out.println(info.getName()); // to see all look and feel alternatives
 			if ("Windows Classic".equals(info.getName())) { // Gui style
 				UIManager.setLookAndFeel(info.getClassName());
 				break;

@@ -2,6 +2,7 @@ package github.tdonuk.notemanager.gui;
 
 import github.tdonuk.notemanager.constant.Application;
 import github.tdonuk.notemanager.gui.component.Editor;
+import github.tdonuk.notemanager.gui.constant.MenuShortcut;
 import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.gui.container.EditorTabPane;
 import github.tdonuk.notemanager.gui.container.Panel;
@@ -10,6 +11,8 @@ import github.tdonuk.notemanager.util.EnvironmentUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -130,12 +133,14 @@ public final class MainWindow extends JFrame {
 		fileMenu = new JMenu("File", true);
 		
 		menuItemNew = new JMenuItem("New");
+		menuItemNew.setAccelerator(MenuShortcut.NEW.getKeyStroke());
 		menuItemNew.addActionListener(e -> {
 			EditorTab tab = editorTabs.addTab("New Document");
 			editorTabs.setSelectedTab(tab);
 		});
 		
 		menuItemOpen = new JMenuItem("Open");
+		menuItemOpen.setAccelerator(MenuShortcut.OPEN.getKeyStroke());
 		menuItemOpen.addActionListener(e -> {
 			File file = DialogUtils.askForFile();
 			
