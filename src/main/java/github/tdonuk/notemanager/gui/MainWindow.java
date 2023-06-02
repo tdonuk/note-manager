@@ -32,7 +32,7 @@ public final class MainWindow extends JFrame {
 			public void windowOpened(WindowEvent e) {
 				System.out.println("app started");
 				
-				editorTabs.getTabs().get(0).getEditorContainer().getEditorPane().getEditor().requestFocus(); // open window as focused to editor and ready-to-write
+				editorTabs.getTabs().values().stream().findAny().orElseThrow(() -> new RuntimeException("app failed to start")).getEditorContainer().getEditorPane().getEditor().requestFocus(); // open window as focused to editor and ready-to-write
 			}
 			
 			@Override

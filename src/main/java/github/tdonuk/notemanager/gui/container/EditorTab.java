@@ -3,15 +3,13 @@ package github.tdonuk.notemanager.gui.container;
 import github.tdonuk.notemanager.constant.FileType;
 import github.tdonuk.notemanager.gui.component.Editor;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.File;
-import java.nio.file.Files;
 
 /**
  * Represents the tabs of the tabbed pane
@@ -25,16 +23,16 @@ public class EditorTab extends JPanel {
 	private FileType type;
 	private File openedFile;
 	
-	public EditorTab(File file) {
+	public EditorTab(@NonNull File file, String title) {
 		super(new BorderLayout());
 		
-		this.title = file.getName();
+		this.title = title;
 		this.openedFile = file;
 
 		init();
 
-		if(title.contains(".")) {
-			type = FileType.findByExtension(title.substring(title.lastIndexOf(".")));
+		if(file.getName().contains(".")) {
+			type = FileType.findByExtension(file.getName().substring(file.getName().lastIndexOf(".")));
 		} else type = FileType.TXT;
 		
 		determineSyntaxHighlighting();
@@ -62,18 +60,28 @@ public class EditorTab extends JPanel {
 	private void init() {
 		this.editorContainer = new EditorContainer();
 		this.add(editorContainer);
-
-		this.addFocusListener(new FocusListener() {
-			@Override
-			public void focusGained(FocusEvent e) {
-				System.out.println("tab opened: " + title);
-			}
-
-			@Override
-			public void focusLost(FocusEvent e) {
-				System.out.println("tab closed: " + title);
-			}
+	}
+	
+	public JPanel getHeader() {
+		JPanel panel = new Panel(new BorderLayout(5, 5));
+		panel.add(new JLabel(title),BorderLayout.WEST);
+		
+		JButton closeButton = new JButton("X");
+		closeButton.addActionListener(a -> {
+			EditorTabPane parent = (EditorTabPane) this.getParent();
+			if(parent.getTabs().size() > 1) parent.remove(parent.indexOfComponent(this));
 		});
+		
+		panel.setOpaque(false);
+		panel.setBackground(null);
+		
+		closeButton.setBorder(null);
+		setBackground(null);
+		setOpaque(false);
+		
+		panel.add(closeButton, BorderLayout.EAST);
+		
+		return panel;
 	}
 	
 }

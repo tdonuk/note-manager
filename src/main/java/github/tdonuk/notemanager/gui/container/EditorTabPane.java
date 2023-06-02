@@ -1,136 +1,143 @@
 package github.tdonuk.notemanager.gui.container;
 
-import github.tdonuk.notemanager.gui.component.Label;
-import github.tdonuk.notemanager.gui.event.CommonEventListeners;
+import github.tdonuk.notemanager.constant.Application;
 import lombok.Getter;
+import lombok.NonNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Getter
 public class EditorTabPane extends JTabbedPane {
-	private final List<EditorTab> tabs = new ArrayList<>();
+	private final Map<File, EditorTab> tabs = new HashMap<>();
+	
+	public static EditorTab SELECTED_TAB = null;
 	
 	public EditorTabPane() {
 		super();
 		
+		this.setFont(Application.PRIMARY_FONT);
+		
+		this.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				EditorTabPane tabbedPane = (EditorTabPane) e.getSource();
+				
+				SELECTED_TAB = (EditorTab) tabbedPane.getSelectedComponent();
+				System.out.println("selected tab: " + SELECTED_TAB.getTitle());
+			}
+		});
+		
 		if(tabs.isEmpty()) addTab("New Document");
 	}
 	
-	public EditorTab addTab(File file) {
-		if(exists(file)) { // user opens the same file that previously opened
-			EditorTab duplicate = getTab(file);
-
-			setSelectedTab(duplicate);
-
-			return duplicate;
+	public EditorTab addTab(@NonNull File file) {
+		if(tabs.containsKey(file)) { // user opens a file that is already opened in a tab
+			setSelectedTab(tabs.get(file));
+			return tabs.get(file);
 		}
-
-		String title = file.getName();
-
-		if(exists(file.getName())) { // user opens a file that a tab already exists with this filename but with a different file
-			title = file.getAbsolutePath();
-
-			EditorTab duplicate = getTab(file);
-			if(duplicate.getOpenedFile() != null) {
-				duplicate.setTitle(duplicate.getOpenedFile().getAbsolutePath());
-				setTitleAt(indexOfTab(file.getName()), duplicate.getOpenedFile().getAbsolutePath());
+		
+		String title = makeTitleUnique(file);
+		
+		if(existsWithFileName(file.getName())) { // user opens a file with name matching one of the already opened files filename
+			List<EditorTab> duplicates = getTabsWithFileName(file.getName());
+			duplicates.forEach(duplicate -> {
+				duplicate.setTitle(duplicate.getOpenedFile().getName() + " ("+duplicate.getOpenedFile().getAbsolutePath()+")");
+				setTitleAt(indexOfComponent(duplicate), duplicate.getTitle());
+			});
+		}
+		
+		EditorTab tabToAdd = new EditorTab(file, title);
+		
+		this.add(title, tabToAdd);
+		
+		tabs.put(file, tabToAdd);
+		
+		return tabToAdd;
+	}
+	
+	@Override
+	public void setTitleAt(int index, String title) {
+		setTabComponentAt(index, ((EditorTab) getComponentAt(index)).getHeader());
+	}
+	
+	@Override
+	public Component add(String title, Component component) {
+		Component added = super.add(title, component);
+		
+		setTabComponentAt(indexOfComponent(added), ((EditorTab) added).getHeader());
+		
+		return added;
+	}
+	
+	@Override
+	public void remove(int index) {
+		EditorTab toDelete = (EditorTab) getComponentAt(index);
+		
+		super.remove(index);
+		
+		tabs.remove(toDelete.getOpenedFile());
+		
+		for(EditorTab tab : tabs.values()) {
+ 			if(getTabsWithFileName(tab.getOpenedFile().getName()).size() == 1) {
+				tab.setTitle(tab.getOpenedFile().getName());
+				setTabComponentAt(indexOfComponent(tab), tab.getHeader());
 			}
 		}
-
-		EditorTab editorTab = new EditorTab(file);
-		editorTab.setTitle(title);
-		
-		tabs.add(editorTab);
-		this.addTab(title, editorTab);
-		
-		this.setTabComponentAt(this.indexOfTab(title), titlePanel(editorTab));
-
-		System.out.println(this.getTabComponentAt(indexOfTab(title)));
-		
-		return editorTab;
 	}
-
+	
 	public EditorTab addTab(String title) {
-		String titleToShow = makeTitleUnique(title);
-
-		EditorTab editorTab = new EditorTab(titleToShow);
-
-		tabs.add(editorTab);
-		this.addTab(editorTab.getTitle(), editorTab);
-
-		this.setTabComponentAt(this.indexOfTab(titleToShow), titlePanel(editorTab));
-
-		return editorTab;
-	}
-
-	private String makeTitleUnique(String title) {
-		int index = 0;
-		String titleToShow = title;
-		while(exists(titleToShow)) {
-			titleToShow = title + " (" + (++index) + ")";
-		}
-
-		return titleToShow;
+		title = makeTitleUnique(title);
+		
+		EditorTab tabToAdd = new EditorTab(new File(title), title);
+		
+		this.add(title, tabToAdd);
+		
+		tabs.put(tabToAdd.getOpenedFile(), tabToAdd);
+		
+		return tabToAdd;
 	}
 	
-	public EditorTab getTab(String title) {
-		return tabs.stream().filter(tab -> title.equals(tab.getTitle())).findAny().orElse(null);
-	}
-
 	public EditorTab getTab(File file) {
-		return tabs.stream().filter(tab -> tab.getOpenedFile() != null && file.getAbsolutePath().equals(tab.getOpenedFile().getAbsolutePath())).findAny().orElse(null);
+		return tabs.get(file);
 	}
 	
-	public EditorTab getSelectedTab() {
-		return (EditorTab) this.getSelectedComponent();
+	public List<EditorTab> getTabsWithFileName(String fileName) {
+		return tabs.values().stream().filter(tab -> tab.getOpenedFile().getName().equals(fileName)).collect(Collectors.toList());
 	}
 	
 	public void setSelectedTab(EditorTab tab) {
-		this.setSelectedIndex(this.indexOfComponent(tab));
+		this.setSelectedIndex(indexOfComponent(tab));
 	}
 	
-	public void setSelectedTab(String title) {
-		this.setSelectedIndex(this.indexOfTab(title));
+	private String makeTitleUnique(String title) {
+		String titleWithIndex = title;
+		int index = 0;
+		
+		while(exists(titleWithIndex)) {
+			titleWithIndex = title + " (" + (++index) + ")";
+		}
+		
+		return titleWithIndex;
+	}
+	
+	private String makeTitleUnique(File file) {
+		return existsWithFileName(file.getName()) ? file.getName() + " ("+ file.getAbsolutePath() +")" : file.getName();
 	}
 	
 	public boolean exists(String title) {
-		return this.tabs.stream().anyMatch(tab -> (tab.getTitle().equals(title)) || (tab.getOpenedFile() != null && tab.getOpenedFile().getName().equals(title)));
-	}
-
-	public boolean exists(File file) {
-		return (exists(file.getName()) || exists(file.getAbsolutePath())) && tabs.stream().map(EditorTab::getOpenedFile).anyMatch(f -> f != null && f.getAbsolutePath().equals(file.getAbsolutePath()));
+		return indexOfTab(title) != -1;
 	}
 	
-	private JPanel titlePanel(EditorTab tab) {
-		JPanel panel = new JPanel(new BorderLayout(5, 0));
-		JLabel label = new Label(tab.getTitle());
-		JLabel close = new Label("x");
-		
-		panel.setBorder(new EmptyBorder(0,2,0,2));
-		
-		close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		close.addMouseListener(CommonEventListeners.mouseClicked(e -> {
-			if(tabs.size() != 1) {
-				tabs.remove(tab);
-				this.remove(this.indexOfTab(tab.getTitle()));
-			}
-		}));
-		
-		panel.add(label, BorderLayout.WEST);
-		panel.add(close, BorderLayout.EAST);
-		
-		panel.setBackground(new Color(0,0,0, 0));
-		
-		return panel;
+	public boolean existsWithFileName(String fileName) {
+		return tabs.values().stream().anyMatch(tab -> tab.getOpenedFile().getName().equals(fileName));
 	}
-
-	@Override
-	public void setTitleAt(int index, String title) {
-		setTabComponentAt(index, titlePanel((EditorTab) getComponentAt(index)));
-	}
+	
 }

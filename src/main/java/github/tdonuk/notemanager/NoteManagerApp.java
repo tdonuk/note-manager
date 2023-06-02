@@ -3,7 +3,6 @@ package github.tdonuk.notemanager;
 import github.tdonuk.notemanager.gui.MainWindow;
 
 import javax.swing.*;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 public class NoteManagerApp {
 	public static void main(String[] args) throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
