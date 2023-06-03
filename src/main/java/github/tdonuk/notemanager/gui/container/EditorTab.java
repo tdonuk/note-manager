@@ -5,6 +5,7 @@ import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.component.Editor;
 import github.tdonuk.notemanager.gui.component.EditorTabPane;
 import github.tdonuk.notemanager.util.DialogUtils;
+import github.tdonuk.notemanager.util.EnvironmentUtils;
 import github.tdonuk.notemanager.util.StringUtils;
 import lombok.Getter;
 import lombok.NonNull;
@@ -30,12 +31,15 @@ public class EditorTab extends JPanel {
 	private String title;
 	private FileType type;
 	private File openedFile;
+	private boolean tempFlag = false; // to determine whether openedFile is actually exists and user has opened it to edit, or this tab has created as 'New Tab' with empty content that has no real file.
 	
 	public EditorTab(@NonNull File file, String title) throws IOException {
 		super(new BorderLayout());
 		
 		this.title = title;
 		this.openedFile = file;
+		
+		if(!openedFile.canRead()) tempFlag = true;
 
 		init();
 		
@@ -102,7 +106,23 @@ public class EditorTab extends JPanel {
 	public void reload() throws IOException {
 		if(openedFile.canRead()) {
 			editorContainer.getEditorPane().getEditor().setText(Files.readString(openedFile.toPath()));
+		} else {
+			if(!tempFlag) { // the tab is not temporary but still cant read file. this means the file is removed or renamed by another software.
+				String message = "The file has deleted or not able to read content. Do you want to keep this tab?";
+				EnvironmentUtils.beep();
+				int response = JOptionPane.showConfirmDialog(null, message, "Can not read content", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+				// 0: yes, 1: no
+				
+				if(response == 1) {
+					removeSelf();
+				}
+			}
 		}
+	}
+	
+	private void removeSelf() {
+		EditorTabPane parent = (EditorTabPane) this.getParent();
+		parent.remove(parent.indexOfComponent(this));
 	}
 	
 	// title component of the tab
@@ -111,10 +131,7 @@ public class EditorTab extends JPanel {
 		panel.add(new JLabel(title),BorderLayout.WEST);
 		
 		JButton closeButton = new JButton("X");
-		closeButton.addActionListener(a -> {
-			EditorTabPane parent = (EditorTabPane) this.getParent();
-			parent.remove(parent.indexOfComponent(this));
-		});
+		closeButton.addActionListener(a -> removeSelf());
 		
 		panel.setOpaque(false);
 		panel.setBackground(null);

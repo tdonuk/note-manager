@@ -72,7 +72,7 @@ public class EditorTabPane extends JTabbedPane {
 	public EditorTab addTab(@NonNull String title) throws IOException {
 		title = makeTitleUnique(title);
 		
-		return addTab(new File(title+".txt"));
+		return addTab(new File(title));
 	}
 	
 	@Override
@@ -102,7 +102,7 @@ public class EditorTabPane extends JTabbedPane {
 		
 		super.remove(index);
 		
-		tabs.remove(toDelete.getOpenedFile());
+		tabs.values().remove(toDelete);
 		
 		for(EditorTab tab : tabs.values()) {
  			if(getTabsWithFileName(tab.getOpenedFile().getName()).size() == 1) {
@@ -131,11 +131,11 @@ public class EditorTabPane extends JTabbedPane {
 	}
 	
 	private String makeTitleUnique(String title) {
-		String titleWithIndex = title;
+		String titleWithIndex = title + ".txt";
 		int index = 0;
 		
-		while(exists(titleWithIndex)) {
-			titleWithIndex = title + " (" + (++index) + ")";
+		while(existsWithFileName(titleWithIndex)) {
+			titleWithIndex = title + " (" + (++index) + ").txt";
 		}
 		
 		return titleWithIndex;
@@ -162,11 +162,11 @@ public class EditorTabPane extends JTabbedPane {
 			File savedFile = tab.save();
 			
 			if(savedFile != null) {
-				remove(indexOfComponent(tab));
-				
 				EditorTab newTab = addTab(savedFile);
 				
 				setSelectedTab(newTab);
+				
+				remove(indexOfComponent(tab));
 				
 				log.info("saved to: " + savedFile.getAbsolutePath());
 			}
