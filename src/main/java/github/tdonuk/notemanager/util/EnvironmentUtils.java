@@ -8,7 +8,7 @@ import java.awt.datatransfer.Clipboard;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class EnvironmentUtils {
-	private static Toolkit toolkit = Toolkit.getDefaultToolkit();
+	private static final Toolkit toolkit = Toolkit.getDefaultToolkit();
 	
 	public static Dimension screenSize() {
 		return toolkit.getScreenSize();
@@ -48,5 +48,9 @@ public final class EnvironmentUtils {
 	
 	public static String workingDir() {
 		return System.getProperty("user.dir");
+	}
+	
+	public static String userDir() {
+		return System.getProperty("user.home");
 	}
 }

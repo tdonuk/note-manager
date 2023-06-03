@@ -2,6 +2,7 @@ package github.tdonuk.notemanager.gui;
 
 import github.tdonuk.notemanager.constant.Application;
 import github.tdonuk.notemanager.gui.component.Editor;
+import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.constant.MenuShortcut;
 import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.gui.container.EditorTabPane;
@@ -11,8 +12,6 @@ import github.tdonuk.notemanager.util.EnvironmentUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -70,13 +69,9 @@ public final class MainWindow extends JFrame {
 		});
 	}
 	
-	private JMenuBar menuBar;
+	private static final JLabel statusLabel = new JLabel("");
 	
-	private JMenu fileMenu;
-	
-	private JMenuItem menuItemNew, menuItemOpen;
-	
-	private JPanel mainPanel, eastPanel, westPanel, northPanel, southPanel, centerPanel;
+	private JPanel mainPanel;
 	
 	private EditorTabPane editorTabs;
 	
@@ -94,7 +89,7 @@ public final class MainWindow extends JFrame {
 	}
 	
 	private void initCenterPanel() {
-		centerPanel = new Panel(new BorderLayout());
+  		JPanel centerPanel = new Panel(new BorderLayout());
 		centerPanel.setBorder(null);
 
 		editorTabs = new EditorTabPane();
@@ -105,44 +100,54 @@ public final class MainWindow extends JFrame {
 	}
 	
 	private void initSouthPanel() {
-		southPanel = new Panel(new BorderLayout());
+  		JPanel southPanel = new Panel(new BorderLayout());
+		
 		southPanel.setBorder(null);
 		
-		southPanel.add(new Label("v"+Application.VERSION), BorderLayout.WEST);
-		southPanel.add(new Label(EnvironmentUtils.osName() + " ("+EnvironmentUtils.osArch()+")"), BorderLayout.EAST);
-
-		southPanel.setFont(Application.SECONDARY_FONT);
+		String osInfo = EnvironmentUtils.osName() + " - "+EnvironmentUtils.osArch()+"";
+		String versionInfo = "v"+Application.VERSION;
+		
+		String systemInfo = versionInfo + " ("+osInfo+")";
+		
+		JLabel systemInfoLabel = new JLabel(systemInfo);
+		
+		JPanel southWestPanel = new Panel();
+		southWestPanel.add(systemInfoLabel);
+		southWestPanel.setFont(Application.SECONDARY_FONT);
+		
+		southPanel.add(southWestPanel, BorderLayout.WEST);
+		southPanel.add(statusLabel, BorderLayout.EAST);
 		
 		mainPanel.add(southPanel, BorderLayout.SOUTH);
 	}
 	
 	private void initNorthPanel() {
-		northPanel = new Panel();
+  		// JPanel northPanel = new Panel();
 	}
 	
 	private void initWestPanel() {
-		westPanel = new Panel();
+		// JPanel westPanel = new Panel();
 	}
 	
 	private void initEastPanel() {
-		eastPanel = new Panel();
+  		// JPanel eastPanel = new Panel();
 	}
 	
 	private void initMenus() {
-		menuBar = new JMenuBar();
-		fileMenu = new JMenu("File", true);
+		JMenuBar topMenu = new JMenuBar();
+		JMenu fileMenu = new JMenu("File", true);
 		
-		menuItemNew = new JMenuItem("New");
+		JMenuItem menuItemNew = new JMenuItem("New");
 		menuItemNew.setAccelerator(MenuShortcut.NEW.getKeyStroke());
 		menuItemNew.addActionListener(e -> {
 			EditorTab tab = editorTabs.addTab("New Document");
 			editorTabs.setSelectedTab(tab);
 		});
 		
-		menuItemOpen = new JMenuItem("Open");
+		JMenuItem menuItemOpen = new JMenuItem("Open");
 		menuItemOpen.setAccelerator(MenuShortcut.OPEN.getKeyStroke());
 		menuItemOpen.addActionListener(e -> {
-			File file = DialogUtils.askForFile();
+			File file = DialogUtils.askForOpen();
 			
 			if(file == null) return;
 			byte[] content;
@@ -163,17 +168,23 @@ public final class MainWindow extends JFrame {
 			}
 		});
 		
-		menuBar.add(fileMenu);
+		topMenu.add(fileMenu);
 		
 		fileMenu.add(menuItemNew);
 		fileMenu.add(menuItemOpen);
 		
-		this.setJMenuBar(menuBar);
+		this.setJMenuBar(topMenu);
 	}
 	
 	public static MainWindow getInstance() {
 		if(instance == null) instance = new MainWindow();
 		return instance;
+	}
+	
+	public static void updateState(EditorState state) {
+		statusLabel.setText(state.getLabel());
+		
+		instance.setEnabled(!state.isShouldBlockUi());
 	}
 	
 }

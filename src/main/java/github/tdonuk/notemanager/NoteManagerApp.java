@@ -1,6 +1,7 @@
 package github.tdonuk.notemanager;
 
 import github.tdonuk.notemanager.gui.MainWindow;
+import github.tdonuk.notemanager.gui.constant.EditorState;
 
 import javax.swing.*;
 
@@ -13,6 +14,9 @@ public class NoteManagerApp {
 				break;
 			}
 		}
-		MainWindow.getInstance().setVisible(true);
+		MainWindow mainWindow = MainWindow.getInstance();
+		mainWindow.setVisible(true);
+		
+		MainWindow.updateState(EditorState.READY);
 	}
 }
