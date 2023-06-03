@@ -3,22 +3,16 @@ package github.tdonuk.notemanager.gui.component;
 import github.tdonuk.notemanager.constant.Application;
 import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.MainWindow;
-import github.tdonuk.notemanager.gui.constant.EditorShortcut;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.container.EditorTab;
-import github.tdonuk.notemanager.util.DialogUtils;
-import github.tdonuk.notemanager.util.StringUtils;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +22,7 @@ import java.util.Map;
 public class EditorTabPane extends JTabbedPane {
 	private final Map<File, EditorTab> tabs = new HashMap<>();
 	
-	public EditorTabPane() {
+	public EditorTabPane() throws IOException {
 		super();
 		
 		this.setFont(Application.PRIMARY_FONT);
@@ -36,13 +30,23 @@ public class EditorTabPane extends JTabbedPane {
 		this.addChangeListener(e -> {
 			EditorTabPane tabbedPane = (EditorTabPane) e.getSource();
 			
-			log.info("selected tab: " + tabbedPane.getSelectedComponent().getTitle());
+			EditorTab selectedTab = tabbedPane.getSelectedComponent();
+			
+			if(selectedTab != null) {
+				log.info("selected tab: " + selectedTab.getTitle());
+				
+				try {
+					tabbedPane.getSelectedComponent().reload();
+				} catch(IOException ex) {
+					throw new CustomException(ex);
+				}
+			}
 		});
 		
 		if(tabs.isEmpty()) addTab("New Document");
 	}
 	
-	public EditorTab addTab(@NonNull File file) {
+	public EditorTab addTab(@NonNull File file) throws IOException {
 		if(tabs.containsKey(file)) { // user opens a file that is already opened in a tab
 			setSelectedTab(tabs.get(file));
 			return tabs.get(file);
@@ -65,7 +69,7 @@ public class EditorTabPane extends JTabbedPane {
 		return tabToAdd;
 	}
 	
-	public EditorTab addTab(@NonNull String title) {
+	public EditorTab addTab(@NonNull String title) throws IOException {
 		title = makeTitleUnique(title);
 		
 		return addTab(new File(title+".txt"));
@@ -84,8 +88,6 @@ public class EditorTabPane extends JTabbedPane {
 		tabs.put(tab.getOpenedFile(), tab);
 		
 		setTabComponentAt(indexOfComponent(added), ((EditorTab) added).getHeader());
-		
-		initTabShortcuts((EditorTab) added);
 		
 		return added;
 	}
@@ -115,69 +117,6 @@ public class EditorTabPane extends JTabbedPane {
 		return (EditorTab) super.getSelectedComponent();
 	}
 	
-	private void initTabShortcuts(EditorTab tab) {
-		// shortcuts for editor operations. like save, format etc..
-		
-		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
-		File tabFile = tab.getOpenedFile();
-		editor.getActionMap().put(EditorShortcut.FORMAT.getOperation(), new AbstractAction() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						log.info("formatting " + editor.getSyntaxEditingStyle());
-						if (editor.getText() == null || editor.getText().isBlank()) return;
-						try {
-							if (SyntaxConstants.SYNTAX_STYLE_XML.equals(editor.getSyntaxEditingStyle())) editor.setText(StringUtils.formatXml(editor.getText()));
-						} catch (Exception ex) {
-							throw new CustomException(ex);
-						}
-					}
-				}
-		);
-		
-		editor.getActionMap().put(EditorShortcut.CLOSE.getOperation(), new AbstractAction() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						remove(indexOfComponent(tab));
-					}
-				}
-		);
-		
-		editor.getActionMap().put(EditorShortcut.SAVE.getOperation(), new AbstractAction() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						log.info("saving " + tabFile.getAbsolutePath());
-						
-						MainWindow.updateState(EditorState.SAVING);
-						
-						try {
-							if(tabFile.canWrite()) {
-								Files.write(tabFile.toPath(), editor.getText().getBytes());
-							}
-							else {
-								File file = DialogUtils.askFileForSave(tabFile);
-								
-								if(file != null) {
-									if(!file.canWrite() && !file.createNewFile()) throw new CustomException("couldn't able to create file to save");
-									Files.write(file.toPath(), editor.getText().getBytes());
-									
-									EditorTab newTab = addTab(file); // add a new tab with newly created/saved file
-									Editor newEditor = newTab.getEditorContainer().getEditorPane().getEditor();
-									newEditor.setText(Files.readString(file.toPath()));
-									
-									remove(indexOfComponent(tab)); // remove the old tab which is mapped to temp file that does not exist
-									
-									setSelectedTab(newTab);
-								}
-							}
-						} catch(IOException ex) {
-							throw new CustomException(ex);
-						}
-						
-						MainWindow.updateState(EditorState.READY);
-					}
-				}
-		);
-	}
 	
 	public EditorTab getTab(File file) {
 		return tabs.get(file);
@@ -212,6 +151,31 @@ public class EditorTabPane extends JTabbedPane {
 	
 	public boolean existsWithFileName(String fileName) {
 		return tabs.values().stream().anyMatch(tab -> tab.getOpenedFile().getName().equals(fileName));
+	}
+	
+	public void saveTab(EditorTab tab) {
+		log.info("saving " + tab.getOpenedFile().getAbsolutePath());
+		
+		MainWindow.updateState(EditorState.SAVING);
+		
+		try {
+			File savedFile = tab.save();
+			
+			if(savedFile != null) {
+				remove(indexOfComponent(tab));
+				
+				EditorTab newTab = addTab(savedFile);
+				
+				setSelectedTab(newTab);
+				
+				log.info("saved to: " + savedFile.getAbsolutePath());
+			}
+			
+		} catch(IOException ex) {
+			throw new CustomException(ex);
+		}
+		
+		MainWindow.updateState(EditorState.READY);
 	}
 	
 }

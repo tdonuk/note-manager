@@ -13,5 +13,8 @@ public class EditorScrollPane extends RTextScrollPane {
 		this.editor = new Editor();
 		
 		this.setViewportView(editor);
+		
+		this.setLineNumbersEnabled(true);
+		
 	}
 }

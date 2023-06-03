@@ -1,11 +1,12 @@
 package github.tdonuk.notemanager.gui;
 
 import github.tdonuk.notemanager.constant.Application;
+import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.component.Editor;
+import github.tdonuk.notemanager.gui.component.EditorTabPane;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.constant.MenuShortcut;
 import github.tdonuk.notemanager.gui.container.EditorTab;
-import github.tdonuk.notemanager.gui.component.EditorTabPane;
 import github.tdonuk.notemanager.gui.container.Panel;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
@@ -16,13 +17,14 @@ import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 
 @Slf4j
 public final class MainWindow extends JFrame {
 	private static MainWindow instance;
 	
-	private MainWindow() {
+	private MainWindow() throws IOException {
 		this.setSize(3*EnvironmentUtils.screenWidth()/4, 3*EnvironmentUtils.screenHeight()/4);
 		this.setLocationRelativeTo(null); // to create the window at the center of the screen
 		this.setTitle(Application.NAME);
@@ -77,7 +79,7 @@ public final class MainWindow extends JFrame {
 	
 	private EditorTabPane editorTabs;
 	
-	private void init() {
+	private void init() throws IOException {
 		mainPanel = new Panel(new BorderLayout());
 		
 		this.setContentPane(mainPanel);
@@ -90,7 +92,7 @@ public final class MainWindow extends JFrame {
 		initMenus();
 	}
 	
-	private void initCenterPanel() {
+	private void initCenterPanel() throws IOException {
   		JPanel centerPanel = new Panel(new BorderLayout());
 		centerPanel.setBorder(null);
 
@@ -136,14 +138,59 @@ public final class MainWindow extends JFrame {
 	}
 	
 	private void initMenus() {
-		JMenuBar topMenu = new JMenuBar();
+		JMenuBar topBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File", true);
+		JMenu editMenu = new JMenu("Edit", true);
 		
+		topBar.add(fileMenu);
+		topBar.add(editMenu);
+		
+		initFileMenu(fileMenu);
+		initEditMenu(editMenu);
+		
+		this.setJMenuBar(topBar);
+	}
+	
+	private void initEditMenu(JMenu editMenu) {
+		JMenuItem menuItemUndo = new JMenuItem("Undo");
+		menuItemUndo.setAccelerator(MenuShortcut.UNDO.getKeyStroke());
+		menuItemUndo.addActionListener(a -> editorTabs.getSelectedComponent().getEditorContainer().getEditorPane().getEditor().undo());
+		
+		JMenuItem menuItemRedo = new JMenuItem("Redo");
+		menuItemRedo.setAccelerator(MenuShortcut.REDO.getKeyStroke());
+		menuItemRedo.addActionListener(a -> editorTabs.getSelectedComponent().getEditorContainer().getEditorPane().getEditor().redo());
+		
+		JMenuItem menuItemRefresh = new JMenuItem("Refresh");
+		menuItemRefresh.setAccelerator(MenuShortcut.REFRESH.getKeyStroke());
+		menuItemRefresh.addActionListener(a -> {
+			try {
+				editorTabs.getSelectedComponent().reload();
+			} catch(IOException e) {
+				throw new CustomException(e);
+			}
+		});
+		
+		JMenuItem menuItemFormat = new JMenuItem("Format");
+		menuItemFormat.setAccelerator(MenuShortcut.FORMAT.getKeyStroke());
+		menuItemFormat.addActionListener(a -> editorTabs.getSelectedComponent().format());
+		
+		editMenu.add(menuItemUndo);
+		editMenu.add(menuItemRedo);
+		editMenu.add(menuItemRefresh);
+		editMenu.add(menuItemFormat);
+	}
+	
+	private void initFileMenu(JMenu fileMenu) {
 		JMenuItem menuItemNew = new JMenuItem("New");
 		menuItemNew.setAccelerator(MenuShortcut.NEW.getKeyStroke());
 		menuItemNew.addActionListener(e -> {
-			EditorTab tab = editorTabs.addTab("New Document");
-			editorTabs.setSelectedTab(tab);
+			
+			try {
+				EditorTab tab = editorTabs.addTab("New Document");
+				editorTabs.setSelectedTab(tab);
+			} catch(IOException ex) {
+				throw new CustomException(ex);
+			}
 		});
 		
 		JMenuItem menuItemOpen = new JMenuItem("Open");
@@ -173,15 +220,16 @@ public final class MainWindow extends JFrame {
 			updateState(EditorState.READY);
 		});
 		
-		topMenu.add(fileMenu);
+		JMenuItem menuItemSave = new JMenuItem("Save");
+		menuItemSave.setAccelerator(MenuShortcut.SAVE.getKeyStroke());
+		menuItemSave.addActionListener(a -> editorTabs.saveTab(editorTabs.getSelectedComponent()));
 		
 		fileMenu.add(menuItemNew);
 		fileMenu.add(menuItemOpen);
-		
-		this.setJMenuBar(topMenu);
+		fileMenu.add(menuItemSave);
 	}
 	
-	public static MainWindow getInstance() {
+	public static MainWindow getInstance() throws IOException {
 		if(instance == null) instance = new MainWindow();
 		return instance;
 	}

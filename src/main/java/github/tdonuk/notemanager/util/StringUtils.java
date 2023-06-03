@@ -28,7 +28,7 @@ public class StringUtils {
 	
 	static {
 		transformerFactory = TransformerFactory.newInstance();
-		transformerFactory.setAttribute("indent-number", 10);
+		transformerFactory.setAttribute("indent-number", 4);
 		
 		try {
 			xmlTransformer = transformerFactory.newTransformer(new StreamSource(new File("xml-formatter.xsl")));
