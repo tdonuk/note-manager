@@ -69,7 +69,7 @@ public class EditorTab extends JPanel {
 		JButton closeButton = new JButton("X");
 		closeButton.addActionListener(a -> {
 			EditorTabPane parent = (EditorTabPane) this.getParent();
-			if(parent.getTabs().size() > 1) parent.remove(parent.indexOfComponent(this));
+			parent.remove(parent.indexOfComponent(this));
 		});
 		
 		panel.setOpaque(false);

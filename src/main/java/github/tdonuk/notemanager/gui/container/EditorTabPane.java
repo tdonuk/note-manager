@@ -79,6 +79,7 @@ public class EditorTabPane extends JTabbedPane {
 		((EditorTab) added).registerKeyboardAction(new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				// TODO: do control for unsaved changes
 				remove(indexOfComponent(added));
 			}
 		}, EditorShortcut.CLOSE.getKeyStroke(), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
