@@ -8,6 +8,7 @@ import lombok.Getter;
 public enum EditorState {
 	READY("Ready", false),
 	SAVING("Saving", true),
+	WAITING_INPUT("Waiting", true),
 	READING_CONTENT("Reading", true),
 	WRITING_CONTENT("Writing", true);
 	

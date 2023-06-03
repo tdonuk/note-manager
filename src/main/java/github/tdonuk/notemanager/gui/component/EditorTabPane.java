@@ -1,11 +1,11 @@
-package github.tdonuk.notemanager.gui.container;
+package github.tdonuk.notemanager.gui.component;
 
 import github.tdonuk.notemanager.constant.Application;
 import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.MainWindow;
-import github.tdonuk.notemanager.gui.component.Editor;
 import github.tdonuk.notemanager.gui.constant.EditorShortcut;
 import github.tdonuk.notemanager.gui.constant.EditorState;
+import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.StringUtils;
 import lombok.Getter;
@@ -165,6 +165,8 @@ public class EditorTabPane extends JTabbedPane {
 									newEditor.setText(Files.readString(file.toPath()));
 									
 									remove(indexOfComponent(tab)); // remove the old tab which is mapped to temp file that does not exist
+									
+									setSelectedTab(newTab);
 								}
 							}
 						} catch(IOException ex) {

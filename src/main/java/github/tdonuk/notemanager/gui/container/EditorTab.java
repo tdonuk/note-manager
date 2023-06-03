@@ -2,6 +2,7 @@ package github.tdonuk.notemanager.gui.container;
 
 import github.tdonuk.notemanager.constant.FileType;
 import github.tdonuk.notemanager.gui.component.Editor;
+import github.tdonuk.notemanager.gui.component.EditorTabPane;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -37,14 +38,6 @@ public class EditorTab extends JPanel {
 		
 		determineSyntaxHighlighting();
 	}
-
-	public EditorTab(String tabName) {
-		super(new BorderLayout());
-
-		this.title = tabName;
-
-		init();
-	}
 	
 	private void determineSyntaxHighlighting() {
 		Editor editor = editorContainer.getEditorPane().getEditor();
@@ -62,6 +55,7 @@ public class EditorTab extends JPanel {
 		this.add(editorContainer);
 	}
 	
+	// title component of the tab
 	public JPanel getHeader() {
 		JPanel panel = new Panel(new BorderLayout(5, 5));
 		panel.add(new JLabel(title),BorderLayout.WEST);

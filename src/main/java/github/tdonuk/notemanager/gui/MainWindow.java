@@ -5,7 +5,7 @@ import github.tdonuk.notemanager.gui.component.Editor;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.constant.MenuShortcut;
 import github.tdonuk.notemanager.gui.container.EditorTab;
-import github.tdonuk.notemanager.gui.container.EditorTabPane;
+import github.tdonuk.notemanager.gui.component.EditorTabPane;
 import github.tdonuk.notemanager.gui.container.Panel;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
@@ -149,24 +149,28 @@ public final class MainWindow extends JFrame {
 		JMenuItem menuItemOpen = new JMenuItem("Open");
 		menuItemOpen.setAccelerator(MenuShortcut.OPEN.getKeyStroke());
 		menuItemOpen.addActionListener(e -> {
+			updateState(EditorState.WAITING_INPUT);
 			File file = DialogUtils.askFileForOpen();
 			
-			if(file == null) return;
-			byte[] content;
-			try {
-				content = Files.readAllBytes(file.toPath());
-				
-				EditorTab tab = editorTabs.addTab(file);
-				
-				Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
-				
-				String contentStr = new String(content);
-				
-				editor.setText(contentStr);
-				editorTabs.setSelectedTab(tab);
-			} catch(Exception ex) {
-				JOptionPane.showMessageDialog(this,"Cannot read file: " + ex.getMessage());
+			if(file != null) {
+				byte[] content;
+				try {
+					content = Files.readAllBytes(file.toPath());
+					
+					EditorTab tab = editorTabs.addTab(file);
+					
+					Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
+					
+					String contentStr = new String(content);
+					
+					editor.setText(contentStr);
+					editorTabs.setSelectedTab(tab);
+				} catch(Exception ex) {
+					JOptionPane.showMessageDialog(this,"Cannot read file: " + ex.getMessage());
+				}
 			}
+			
+			updateState(EditorState.READY);
 		});
 		
 		topMenu.add(fileMenu);
