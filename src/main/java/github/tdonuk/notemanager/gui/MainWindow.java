@@ -124,15 +124,15 @@ public final class MainWindow extends JFrame {
 	}
 	
 	private void initNorthPanel() {
-		// TODO document why this method is empty
+		// TODO: add components to the north side of the main window
 	}
 	
 	private void initWestPanel() {
-		// TODO document why this method is empty
+		// TODO: add components to the west side of the main window
 	}
 	
 	private void initEastPanel() {
-		// TODO document why this method is empty
+		// TODO: add components to the east side of the main window
 	}
 	
 	private void initMenus() {
