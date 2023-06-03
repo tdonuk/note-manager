@@ -9,6 +9,7 @@ import github.tdonuk.notemanager.gui.container.EditorTabPane;
 import github.tdonuk.notemanager.gui.container.Panel;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,6 +18,7 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.nio.file.Files;
 
+@Slf4j
 public final class MainWindow extends JFrame {
 	private static MainWindow instance;
 	
@@ -32,39 +34,39 @@ public final class MainWindow extends JFrame {
 		this.addWindowListener(new WindowListener() {
 			@Override
 			public void windowOpened(WindowEvent e) {
-				System.out.println("app started");
+				log.info("app started");
 				
 				editorTabs.getTabs().values().stream().findAny().orElseThrow(() -> new RuntimeException("app failed to start")).getEditorContainer().getEditorPane().getEditor().requestFocus(); // open window as focused to editor and ready-to-write
 			}
 			
 			@Override
 			public void windowClosing(WindowEvent e) {
-				System.out.println("main window is closing");
+				log.info("main window is closing");
 			}
 			
 			@Override
 			public void windowClosed(WindowEvent e) {
-				System.out.println("main window closed");
+				log.info("main window closed");
 			}
 			
 			@Override
 			public void windowIconified(WindowEvent e) {
-				System.out.println("app iconified");
+				log.info("app iconified");
 			}
 			
 			@Override
 			public void windowDeiconified(WindowEvent e) {
-				System.out.println("app de-iconified");
+				log.info("app de-iconified");
 			}
 			
 			@Override
 			public void windowActivated(WindowEvent e) {
-				System.out.println("main window activated");
+				log.info("main window activated");
 			}
 			
 			@Override
 			public void windowDeactivated(WindowEvent e) {
-				System.out.println("main window deactivated");
+				log.info("main window deactivated");
 			}
 		});
 	}
@@ -104,7 +106,7 @@ public final class MainWindow extends JFrame {
 		
 		southPanel.setBorder(null);
 		
-		String osInfo = EnvironmentUtils.osName() + " - "+EnvironmentUtils.osArch()+"";
+		String osInfo = EnvironmentUtils.osName() + " - "+EnvironmentUtils.osArch();
 		String versionInfo = "v"+Application.VERSION;
 		
 		String systemInfo = versionInfo + " ("+osInfo+")";
@@ -122,15 +124,15 @@ public final class MainWindow extends JFrame {
 	}
 	
 	private void initNorthPanel() {
-  		// JPanel northPanel = new Panel();
+		// TODO document why this method is empty
 	}
 	
 	private void initWestPanel() {
-		// JPanel westPanel = new Panel();
+		// TODO document why this method is empty
 	}
 	
 	private void initEastPanel() {
-  		// JPanel eastPanel = new Panel();
+		// TODO document why this method is empty
 	}
 	
 	private void initMenus() {
