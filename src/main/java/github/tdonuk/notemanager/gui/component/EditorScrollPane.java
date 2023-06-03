@@ -1,6 +1,5 @@
-package github.tdonuk.notemanager.gui.container;
+package github.tdonuk.notemanager.gui.component;
 
-import github.tdonuk.notemanager.gui.component.Editor;
 import lombok.Getter;
 import org.fife.ui.rtextarea.RTextScrollPane;
 

@@ -154,7 +154,7 @@ public class EditorTabPane extends JTabbedPane {
 								Files.write(tabFile.toPath(), editor.getText().getBytes());
 							}
 							else {
-								File file = DialogUtils.askForSave(tabFile);
+								File file = DialogUtils.askFileForSave(tabFile);
 								
 								if(file != null) {
 									if(!file.canWrite() && !file.createNewFile()) throw new CustomException("couldn't able to create file to save");

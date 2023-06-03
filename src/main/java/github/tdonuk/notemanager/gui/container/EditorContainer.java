@@ -1,5 +1,6 @@
 package github.tdonuk.notemanager.gui.container;
 
+import github.tdonuk.notemanager.gui.component.EditorScrollPane;
 import lombok.Getter;
 
 import javax.swing.*;

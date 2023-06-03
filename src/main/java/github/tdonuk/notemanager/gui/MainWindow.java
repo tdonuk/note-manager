@@ -149,7 +149,7 @@ public final class MainWindow extends JFrame {
 		JMenuItem menuItemOpen = new JMenuItem("Open");
 		menuItemOpen.setAccelerator(MenuShortcut.OPEN.getKeyStroke());
 		menuItemOpen.addActionListener(e -> {
-			File file = DialogUtils.askForOpen();
+			File file = DialogUtils.askFileForOpen();
 			
 			if(file == null) return;
 			byte[] content;
@@ -164,7 +164,6 @@ public final class MainWindow extends JFrame {
 				
 				editor.setText(contentStr);
 				editorTabs.setSelectedTab(tab);
-				
 			} catch(Exception ex) {
 				JOptionPane.showMessageDialog(this,"Cannot read file: " + ex.getMessage());
 			}
