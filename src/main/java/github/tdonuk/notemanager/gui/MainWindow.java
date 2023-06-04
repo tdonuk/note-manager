@@ -15,11 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.util.List;
 
 @Slf4j
 public final class MainWindow extends JFrame {
@@ -103,11 +106,7 @@ public final class MainWindow extends JFrame {
 		editorTabs = new EditorTabPane();
 		
 		if(editorTabs.getTabs().isEmpty()) {
-			EditorTab tab = editorTabs.addTab("New Document");
-			
-			Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
-			
-			editor.addCaretListener(c -> updatePositionInformation(editor));
+			createTab("New Document");
 		}
 		
 		centerPanel.add(editorTabs);
@@ -212,13 +211,7 @@ public final class MainWindow extends JFrame {
 		menuItemNew.addActionListener(e -> {
 			
 			try {
-				EditorTab tab = editorTabs.addTab("New Document");
-				
-				Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
-				
-				editor.addCaretListener(c -> updatePositionInformation(editor));
-				
-				editorTabs.setSelectedTab(tab);
+				createTab("New Document");
 			} catch(IOException ex) {
 				throw new CustomException(ex);
 			}
@@ -231,20 +224,8 @@ public final class MainWindow extends JFrame {
 			File file = DialogUtils.askFileForOpen();
 			
 			if(file != null) {
-				byte[] content;
 				try {
-					content = Files.readAllBytes(file.toPath());
-					
-					EditorTab tab = editorTabs.addTab(file);
-					
-					Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
-					
-					editor.addCaretListener(c -> updatePositionInformation(editor));
-					
-					String contentStr = new String(content);
-					
-					editor.setText(contentStr);
-					editorTabs.setSelectedTab(tab);
+					createTab(file);
 				} catch(Exception ex) {
 					JOptionPane.showMessageDialog(this,"Cannot read file: " + ex.getMessage());
 				}
@@ -283,6 +264,89 @@ public final class MainWindow extends JFrame {
 		totalCharactersLabel.setText("length: " + totalCharacters);
 		
 		currentPositionLabel.setText(currentLine + " | " + currentColumn);
+	}
+	
+	private EditorTab createTab(File file) throws IOException {
+		EditorTab tab = editorTabs.addTab(file);
+		
+		initTabEditor(tab);
+		
+		return tab;
+	}
+	
+	private EditorTab createTab(String title) throws IOException {
+		EditorTab tab = editorTabs.addTab(title);
+		
+		initTabEditor(tab);
+		
+		return tab;
+	}
+	
+	private void initTabEditor(EditorTab tab) {
+		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
+		
+		editor.addCaretListener(c -> updatePositionInformation(editor));
+		addDragListenerToEditor(editor);
+		
+		editorTabs.setSelectedTab(tab);
+	}
+	
+	private void addDragListenerToEditor(Editor editor) {
+		new DropTarget(editor, new DropTargetListener() {
+			@Override
+			public void dragEnter(DropTargetDragEvent dtde) {
+				log.info("drag entered: " + dtde.getSource());
+			}
+			
+			@Override
+			public void dragOver(DropTargetDragEvent dtde) {
+				// prints too much logs
+			}
+			
+			@Override
+			public void dropActionChanged(DropTargetDragEvent dtde) {
+				log.info("drop changed: " + dtde.getSource());
+			}
+			
+			@Override
+			public void dragExit(DropTargetEvent dte) {
+				log.info("drag exit: " + dte.getSource());
+			}
+			
+			@Override
+			public void drop(DropTargetDropEvent dtde) {
+				updateState(EditorState.WAITING_INPUT);
+				
+				java.util.List<DataFlavor> datas = dtde.getCurrentDataFlavorsAsList();
+				
+				Transferable tr = dtde.getTransferable();
+				
+				for(DataFlavor data : datas) {
+					if(data.isFlavorJavaFileListType()) {
+						dtde.acceptDrop(DnDConstants.ACTION_COPY);
+						
+						try {
+							java.util.List<?> list = (List<?>) tr.getTransferData(data);
+							
+							if(list.size() != 1) {
+								dtde.dropComplete(false);
+								DialogUtils.showError("Multiple files are not allowed", "Cannot open files");
+								return;
+							}
+							
+							File file = (File) list.get(0);
+							
+							createTab(file);
+							
+							dtde.dropComplete(true);
+						} catch(Exception e) {
+							dtde.dropComplete(false);
+						}
+					}
+				}
+				updateState(EditorState.READY);
+			}
+		});
 	}
 	
 }
