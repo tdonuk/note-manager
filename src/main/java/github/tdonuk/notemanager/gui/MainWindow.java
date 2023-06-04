@@ -13,6 +13,7 @@ import github.tdonuk.notemanager.util.EnvironmentUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -73,7 +74,10 @@ public final class MainWindow extends JFrame {
 		});
 	}
 	
-	private static final JLabel statusLabel = new JLabel("");
+	private static final JLabel statusLabel = new JLabel();
+	private final JLabel currentPositionLabel = new JLabel();
+	private final JLabel totalLinesLabel = new JLabel();
+	private final JLabel totalCharactersLabel = new JLabel("");
 	
 	private JPanel mainPanel;
 	
@@ -98,6 +102,24 @@ public final class MainWindow extends JFrame {
 
 		editorTabs = new EditorTabPane();
 		
+		if(editorTabs.getTabs().isEmpty()) {
+			EditorTab tab = editorTabs.addTab("New Document");
+			
+			Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
+			
+			editor.addCaretListener(c -> {
+				int totalLines = editor.getLineCount();
+				int totalCharacters = editor.getText().length();
+				int currentLine = editor.getCaretLineNumber();
+				int currentColumn = editor.getCaretOffsetFromLineStart();
+				
+				totalLinesLabel.setText("lines: " + totalLines);
+				totalCharactersLabel.setText("length: " + totalCharacters);
+				
+				currentPositionLabel.setText(currentLine + " | " + currentColumn);
+			});
+		}
+		
 		centerPanel.add(editorTabs);
 		
 		mainPanel.add(centerPanel, BorderLayout.CENTER);
@@ -117,10 +139,24 @@ public final class MainWindow extends JFrame {
 		
 		JPanel southWestPanel = new Panel();
 		southWestPanel.add(systemInfoLabel);
-		southWestPanel.setFont(Application.SECONDARY_FONT);
+		
+		JPanel southEastPanel = new Panel();
+		southEastPanel.add(statusLabel);
+		
+		southEastPanel.add(currentPositionLabel);
+		currentPositionLabel.setBorder(new EmptyBorder(0, 10, 0, 10));
+		currentPositionLabel.setToolTipText("Current line | column");
+		
+		southEastPanel.add(totalLinesLabel);
+		totalLinesLabel.setBorder(new EmptyBorder(0, 0, 0, 2));
+		
+		southEastPanel.add(totalCharactersLabel);
+		totalCharactersLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
 		
 		southPanel.add(southWestPanel, BorderLayout.WEST);
-		southPanel.add(statusLabel, BorderLayout.EAST);
+		southPanel.add(southEastPanel, BorderLayout.EAST);
+		
+		southPanel.setFont(Application.SECONDARY_FONT);
 		
 		mainPanel.add(southPanel, BorderLayout.SOUTH);
 	}

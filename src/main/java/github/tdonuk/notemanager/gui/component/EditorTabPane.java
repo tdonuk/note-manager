@@ -22,7 +22,7 @@ import java.util.Map;
 public class EditorTabPane extends JTabbedPane {
 	private final Map<File, EditorTab> tabs = new HashMap<>();
 	
-	public EditorTabPane() throws IOException {
+	public EditorTabPane() {
 		super();
 		
 		this.setFont(Application.PRIMARY_FONT);
@@ -42,8 +42,6 @@ public class EditorTabPane extends JTabbedPane {
 				}
 			}
 		});
-		
-		if(tabs.isEmpty()) addTab("New Document");
 	}
 	
 	public EditorTab addTab(@NonNull File file) throws IOException {
