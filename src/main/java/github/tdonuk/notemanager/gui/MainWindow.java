@@ -276,7 +276,7 @@ public final class MainWindow extends JFrame {
 	private void updatePositionInformation(Editor editor) {
 		int totalLines = editor.getLineCount();
 		int totalCharacters = editor.getText().length();
-		int currentLine = editor.getCaretLineNumber();
+		int currentLine = editor.getCaretLineNumber() + 1;
 		int currentColumn = editor.getCaretOffsetFromLineStart();
 		
 		totalLinesLabel.setText("lines: " + totalLines);
