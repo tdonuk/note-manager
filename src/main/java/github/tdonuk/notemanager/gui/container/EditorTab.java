@@ -139,8 +139,7 @@ public class EditorTab extends JPanel {
 		headerPanel.setBackground(null);
 		
 		closeButton.setBorder(null);
-		setBackground(null);
-		setOpaque(false);
+		closeButton.setContentAreaFilled(false);
 		
 		headerPanel.add(closeButton, BorderLayout.EAST);
 		
