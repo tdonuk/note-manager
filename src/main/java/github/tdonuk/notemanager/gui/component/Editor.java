@@ -10,11 +10,6 @@ public class Editor extends RSyntaxTextArea {
     @SneakyThrows
     public Editor() {
         super();
-        
-        this.addCaretListener(e -> {
-            // System.out.println("caret updated: " + this.getCaretLineNumber() + " x " + this.getCaretOffsetFromLineStart());
-            // TODO: show caret line and column at the footer of the main window
-        });
     }
     
     public void undo() {

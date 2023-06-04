@@ -44,8 +44,6 @@ public class EditorTab extends JPanel {
 		init();
 		
 		reload();
-		
-		// TODO: show line and character counts in opened file at the footer of the main window
 
 		if(file.getName().contains(".")) {
 			type = FileType.findByExtension(file.getName().substring(file.getName().lastIndexOf(".")));
