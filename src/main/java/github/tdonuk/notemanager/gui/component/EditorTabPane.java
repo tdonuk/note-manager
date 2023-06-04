@@ -33,8 +33,7 @@ public class EditorTabPane extends JTabbedPane {
 				log.info("selected tab: " + selectedTab.getTitle());
 				
 				try {
-					tabbedPane.getSelectedComponent().reload(false);
-					if(selectedTab.isTempFlag()) setTabComponentAt(indexOfComponent(selectedTab), selectedTab.getHeader());
+					reloadTab(selectedTab);
 				} catch(IOException ex) {
 					throw new CustomException(ex);
 				}
@@ -141,10 +140,6 @@ public class EditorTabPane extends JTabbedPane {
 		return existsWithFileName(file.getName()) ? file.getName() + " ("+ file.getAbsolutePath() +")" : file.getName();
 	}
 	
-	public boolean exists(String title) {
-		return indexOfTab(title) != -1;
-	}
-	
 	public boolean existsWithFileName(String fileName) {
 		return tabs.values().stream().anyMatch(tab -> tab.getOpenedFile().getName().equals(fileName));
 	}
@@ -159,11 +154,9 @@ public class EditorTabPane extends JTabbedPane {
 			
 			if(savedFile != null) {
 				if(!tabs.containsKey(savedFile)) {
-					EditorTab newTab = addTab(savedFile);
-					
-					setSelectedTab(newTab);
-					
-					remove(indexOfComponent(tab));
+					tabs.values().remove(tab);
+					tabs.put(savedFile, tab);
+					reloadTab(tab);
 				}
 				
 				log.info("saved to: " + savedFile.getAbsolutePath());
@@ -174,6 +167,11 @@ public class EditorTabPane extends JTabbedPane {
 		}
 		
 		MainWindow.updateState(EditorState.READY);
+	}
+	
+	public void reloadTab(EditorTab tab) throws IOException {
+		getSelectedComponent().reload(false);
+		if(tab.isTempFlag()) setTabComponentAt(indexOfComponent(tab), tab.getHeader());
 	}
 	
 }
