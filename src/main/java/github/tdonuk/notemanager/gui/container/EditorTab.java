@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -127,22 +128,22 @@ public class EditorTab extends JPanel {
 	
 	// title component of the tab
 	public JPanel getHeader() {
-		JPanel panel = new Panel(new BorderLayout(5, 5));
-		panel.add(new JLabel(title),BorderLayout.WEST);
+		JPanel headerPanel = new Panel(new BorderLayout(5, 5));
+		headerPanel.add(new JLabel(title, FileSystemView.getFileSystemView().getSystemIcon(openedFile), SwingConstants.LEADING),BorderLayout.WEST);
 		
 		JButton closeButton = new JButton("X");
 		closeButton.addActionListener(a -> removeSelf());
 		
-		panel.setOpaque(false);
-		panel.setBackground(null);
+		headerPanel.setOpaque(false);
+		headerPanel.setBackground(null);
 		
 		closeButton.setBorder(null);
 		setBackground(null);
 		setOpaque(false);
 		
-		panel.add(closeButton, BorderLayout.EAST);
+		headerPanel.add(closeButton, BorderLayout.EAST);
 		
-		return panel;
+		return headerPanel;
 	}
 	
 }

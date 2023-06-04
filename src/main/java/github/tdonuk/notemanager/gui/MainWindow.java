@@ -296,6 +296,7 @@ public final class MainWindow extends JFrame {
 			@Override
 			public void dragEnter(DropTargetDragEvent dtde) {
 				log.info("drag entered: " + dtde.getSource());
+				updateState(EditorState.WAITING_INPUT);
 			}
 			
 			@Override
@@ -311,12 +312,11 @@ public final class MainWindow extends JFrame {
 			@Override
 			public void dragExit(DropTargetEvent dte) {
 				log.info("drag exit: " + dte.getSource());
+				updateState(EditorState.READY);
 			}
 			
 			@Override
 			public void drop(DropTargetDropEvent dtde) {
-				updateState(EditorState.WAITING_INPUT);
-				
 				java.util.List<DataFlavor> datas = dtde.getCurrentDataFlavorsAsList();
 				
 				Transferable tr = dtde.getTransferable();
