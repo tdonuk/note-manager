@@ -68,6 +68,11 @@ public final class MainWindow extends JFrame {
 			@Override
 			public void windowActivated(WindowEvent e) {
 				log.info("main window activated");
+				try {
+					editorTabs.getSelectedComponent().reload(false);
+				} catch(IOException ex) {
+					throw new CustomException(ex);
+				}
 			}
 			
 			@Override

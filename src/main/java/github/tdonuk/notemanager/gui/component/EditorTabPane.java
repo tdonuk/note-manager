@@ -34,6 +34,7 @@ public class EditorTabPane extends JTabbedPane {
 				
 				try {
 					tabbedPane.getSelectedComponent().reload(false);
+					if(selectedTab.isTempFlag()) setTabComponentAt(indexOfComponent(selectedTab), selectedTab.getHeader());
 				} catch(IOException ex) {
 					throw new CustomException(ex);
 				}
