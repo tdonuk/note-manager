@@ -1,6 +1,5 @@
 package github.tdonuk.notemanager.gui.component;
 
-import github.tdonuk.notemanager.constant.Application;
 import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.MainWindow;
 import github.tdonuk.notemanager.gui.constant.EditorState;
@@ -25,8 +24,6 @@ public class EditorTabPane extends JTabbedPane {
 	public EditorTabPane() {
 		super();
 		
-		this.setFont(Application.PRIMARY_FONT);
-		
 		this.addChangeListener(e -> {
 			EditorTabPane tabbedPane = (EditorTabPane) e.getSource();
 			
@@ -36,7 +33,7 @@ public class EditorTabPane extends JTabbedPane {
 				log.info("selected tab: " + selectedTab.getTitle());
 				
 				try {
-					tabbedPane.getSelectedComponent().reload();
+					tabbedPane.getSelectedComponent().reload(false);
 				} catch(IOException ex) {
 					throw new CustomException(ex);
 				}

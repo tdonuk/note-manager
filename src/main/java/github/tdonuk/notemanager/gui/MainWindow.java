@@ -189,7 +189,7 @@ public final class MainWindow extends JFrame {
 		menuItemRefresh.setAccelerator(MenuShortcut.REFRESH.getKeyStroke());
 		menuItemRefresh.addActionListener(a -> {
 			try {
-				editorTabs.getSelectedComponent().reload();
+				editorTabs.getSelectedComponent().reload(true);
 			} catch(IOException e) {
 				throw new CustomException(e);
 			}

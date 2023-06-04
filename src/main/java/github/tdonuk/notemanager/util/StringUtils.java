@@ -1,5 +1,6 @@
 package github.tdonuk.notemanager.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.w3c.dom.Document;
@@ -12,10 +13,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.File;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,6 +23,8 @@ import java.util.Base64;
 public class StringUtils {
 	private static final TransformerFactory transformerFactory;
 	private static final Transformer xmlTransformer;
+	
+	private static final ObjectMapper objectMapper = new ObjectMapper();
 	
 	static {
 		transformerFactory = TransformerFactory.newInstance();
@@ -50,6 +50,14 @@ public class StringUtils {
 		xmlTransformer.transform(new DOMSource(document), new StreamResult(out));
 		
 		return out.toString();
+	}
+	
+	public static String formatJson(String raw) throws IOException {
+		StringWriter writer = new StringWriter();
+		
+		objectMapper.writerWithDefaultPrettyPrinter().writeValues(writer).write(objectMapper.readTree(raw));
+		
+		return writer.toString();
 	}
 	
 	public static String base64Encode(String raw, boolean withPadding){

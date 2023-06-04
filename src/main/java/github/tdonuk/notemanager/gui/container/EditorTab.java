@@ -44,7 +44,7 @@ public class EditorTab extends JPanel {
 
 		init();
 		
-		reload();
+		reload(true);
 
 		if(file.getName().contains(".")) {
 			type = FileType.findByExtension(file.getName().substring(file.getName().lastIndexOf(".")));
@@ -99,14 +99,15 @@ public class EditorTab extends JPanel {
 		
 		try {
 			if (FileType.XML.equals(type)) editor.setText(StringUtils.formatXml(editor.getText()));
+			else if(FileType.JSON.equals(type)) editor.setText(StringUtils.formatJson(editor.getText()));
 		} catch (Exception ex) {
 			throw new CustomException(ex);
 		}
 	}
 	
-	public void reload() throws IOException {
+	public void reload(boolean refreshContent) throws IOException {
 		if(openedFile.canRead()) {
-			editorContainer.getEditorPane().getEditor().setText(Files.readString(openedFile.toPath()));
+			if(refreshContent) editorContainer.getEditorPane().getEditor().setText(Files.readString(openedFile.toPath()));
 		} else {
 			if(!tempFlag) { // the tab is not temporary but still cant read file. this means the file is removed or renamed by another software.
 				String message = "The file has deleted or not able to read content. Do you want to keep this tab?";
@@ -116,7 +117,7 @@ public class EditorTab extends JPanel {
 				
 				if(response == 1) {
 					removeSelf();
-				}
+				} else tempFlag = true;
 			}
 		}
 	}
