@@ -160,11 +160,13 @@ public class EditorTabPane extends JTabbedPane {
 			File savedFile = tab.save();
 			
 			if(savedFile != null) {
-				EditorTab newTab = addTab(savedFile);
-				
-				setSelectedTab(newTab);
-				
-				remove(indexOfComponent(tab));
+				if(!tabs.containsKey(savedFile)) {
+					EditorTab newTab = addTab(savedFile);
+					
+					setSelectedTab(newTab);
+					
+					remove(indexOfComponent(tab));
+				}
 				
 				log.info("saved to: " + savedFile.getAbsolutePath());
 			}

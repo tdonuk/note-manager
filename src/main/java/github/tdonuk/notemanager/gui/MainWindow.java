@@ -107,17 +107,7 @@ public final class MainWindow extends JFrame {
 			
 			Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
 			
-			editor.addCaretListener(c -> {
-				int totalLines = editor.getLineCount();
-				int totalCharacters = editor.getText().length();
-				int currentLine = editor.getCaretLineNumber();
-				int currentColumn = editor.getCaretOffsetFromLineStart();
-				
-				totalLinesLabel.setText("lines: " + totalLines);
-				totalCharactersLabel.setText("length: " + totalCharacters);
-				
-				currentPositionLabel.setText(currentLine + " | " + currentColumn);
-			});
+			editor.addCaretListener(c -> updatePositionInformation(editor));
 		}
 		
 		centerPanel.add(editorTabs);
@@ -223,6 +213,11 @@ public final class MainWindow extends JFrame {
 			
 			try {
 				EditorTab tab = editorTabs.addTab("New Document");
+				
+				Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
+				
+				editor.addCaretListener(c -> updatePositionInformation(editor));
+				
 				editorTabs.setSelectedTab(tab);
 			} catch(IOException ex) {
 				throw new CustomException(ex);
@@ -243,6 +238,8 @@ public final class MainWindow extends JFrame {
 					EditorTab tab = editorTabs.addTab(file);
 					
 					Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
+					
+					editor.addCaretListener(c -> updatePositionInformation(editor));
 					
 					String contentStr = new String(content);
 					
@@ -274,6 +271,18 @@ public final class MainWindow extends JFrame {
 		statusLabel.setText(state.getLabel());
 		
 		instance.setEnabled(!state.isShouldBlockUi());
+	}
+	
+	private void updatePositionInformation(Editor editor) {
+		int totalLines = editor.getLineCount();
+		int totalCharacters = editor.getText().length();
+		int currentLine = editor.getCaretLineNumber();
+		int currentColumn = editor.getCaretOffsetFromLineStart();
+		
+		totalLinesLabel.setText("lines: " + totalLines);
+		totalCharactersLabel.setText("length: " + totalCharacters);
+		
+		currentPositionLabel.setText(currentLine + " | " + currentColumn);
 	}
 	
 }
