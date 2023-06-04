@@ -41,12 +41,11 @@ public final class DialogUtils {
 	 *
 	 * @param message Message to show the user
 	 * @param title Title of the dialog
-	 * @param type example: JOptionPane.INFORMATION_MESSAGE
 	 * @return true, if selected 'Yes' option, false otherwise
 	 */
-	public static Boolean askConfirmation(String message, String title, int type) {
+	public static Boolean askConfirmation(String message, String title) {
 		EnvironmentUtils.beep();
-		return JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION, type, null) == 0; // Yes: 0, No: 1
+		return JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null) == 0; // Yes: 0, No: 1
 	}
 	
 	public static void showError(String message, String title) {

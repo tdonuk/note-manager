@@ -4,6 +4,7 @@ import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.MainWindow;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.container.EditorTab;
+import github.tdonuk.notemanager.util.DialogUtils;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -89,11 +90,12 @@ public class EditorTabPane extends JTabbedPane {
 	
 	@Override
 	public void remove(int index) {
-		if(tabs.size() < 2) return;
-		
-		// TODO: do control for unsaved changes
-		
 		EditorTab toDelete = (EditorTab) getComponentAt(index);
+		
+		if(toDelete.hasDiff()) {
+			boolean accepted = DialogUtils.askConfirmation("Your unsaved changes will be lost. Still close this tab?", "Unsaved Changes");
+			if(!accepted) return;
+		}
 		
 		super.remove(index);
 		

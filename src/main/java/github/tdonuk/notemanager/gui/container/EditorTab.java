@@ -147,4 +147,16 @@ public class EditorTab extends JPanel {
 		return headerPanel;
 	}
 	
+	public boolean hasDiff() {
+		try {
+			if(tempFlag && getEditorContainer().getEditorPane().getEditor().getText().isBlank()) return false; // this tab is temp, but content is empty
+			else if(!tempFlag && openedFile.canRead()) { // tab is not temp
+				return ! Files.readString(openedFile.toPath()).equals(editorContainer.getEditorPane().getEditor().getText());
+			} else return true; // tab is temp and has content in it
+		} catch(Exception e) {
+			DialogUtils.showError("Cannot check for diff: " + e.getMessage(), "Diff Check Failed");
+			return true;
+		}
+	}
+	
 }

@@ -22,7 +22,9 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 @Slf4j
 public final class MainWindow extends JFrame {
@@ -33,7 +35,7 @@ public final class MainWindow extends JFrame {
 		this.setLocationRelativeTo(null); // to create the window at the center of the screen
 		this.setTitle(Application.NAME);
 		this.setFont(Application.PRIMARY_FONT);
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		
 		init();
 		
@@ -48,6 +50,17 @@ public final class MainWindow extends JFrame {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				log.info("main window is closing");
+				StringJoiner stringJoiner = new StringJoiner("\n", "\n", "\n");
+				editorTabs.getTabs().values().forEach(tab -> {
+					if(tab.hasDiff()) {
+						stringJoiner.add(tab.getTitle());
+					}
+				});
+				boolean confirmed = DialogUtils.askConfirmation("Your unsaved changes in these tabs: " + stringJoiner + " will be lost. Do you want to continue?", "Unsaved Changes");
+				if(confirmed) {
+					e.getWindow().dispose();
+					System.exit(0);
+				}
 			}
 			
 			@Override
@@ -69,7 +82,8 @@ public final class MainWindow extends JFrame {
 			public void windowActivated(WindowEvent e) {
 				log.info("main window activated");
 				try {
-					editorTabs.getSelectedComponent().reload(false);
+					EditorTab tab = editorTabs.getSelectedComponent();
+					if(tab != null) tab.reload(false);
 				} catch(IOException ex) {
 					throw new CustomException(ex);
 				}
