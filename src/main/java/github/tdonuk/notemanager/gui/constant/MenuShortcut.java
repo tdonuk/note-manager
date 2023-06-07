@@ -20,7 +20,8 @@ public enum MenuShortcut {
 	REFRESH("CTRL + F5", KeyStroke.getKeyStroke(KeyEvent.VK_F5, InputEvent.CTRL_DOWN_MASK), "refresh"),
 	UNDO("CTRL + Z", KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "undo"),
 	REDO("CTRL + Y", KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "redo"),
-	CLOSE("CTRL + W", KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK), "closeTab");
+	CLOSE("CTRL + W", KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK), "closeTab"),
+	SEARCH("CTRL + F", KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "search");
 	
 	private final String label;
 	private final KeyStroke keyStroke;

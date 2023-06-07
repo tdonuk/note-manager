@@ -6,10 +6,15 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import java.awt.event.ActionEvent;
 
 public class Editor extends RSyntaxTextArea {
-
     @SneakyThrows
     public Editor() {
         super();
+        
+        this.setMarkAllOnOccurrenceSearches(true);
+        this.setMarkOccurrences(true);
+        
+        this.setLineWrap(false);
+        this.setWrapStyleWord(false);
     }
     
     public void undo() {

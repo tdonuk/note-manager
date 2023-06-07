@@ -3,7 +3,7 @@ package github.tdonuk.notemanager.gui.container;
 import github.tdonuk.notemanager.constant.FileType;
 import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.component.Editor;
-import github.tdonuk.notemanager.gui.component.EditorTabPane;
+import github.tdonuk.notemanager.gui.component.EditorTabManager;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
 import github.tdonuk.notemanager.util.StringUtils;
@@ -123,7 +123,7 @@ public class EditorTab extends JPanel {
 	}
 	
 	private void removeSelf() {
-		EditorTabPane parent = (EditorTabPane) this.getParent();
+		EditorTabManager parent = (EditorTabManager) this.getParent();
 		parent.remove(parent.indexOfComponent(this));
 	}
 	

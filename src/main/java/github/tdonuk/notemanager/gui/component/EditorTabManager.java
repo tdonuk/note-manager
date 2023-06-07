@@ -19,14 +19,14 @@ import java.util.Map;
 
 @Getter
 @Slf4j
-public class EditorTabPane extends JTabbedPane {
+public class EditorTabManager extends JTabbedPane {
 	private final Map<File, EditorTab> tabs = new HashMap<>();
 	
-	public EditorTabPane() {
+	public EditorTabManager() {
 		super();
 		
 		this.addChangeListener(e -> {
-			EditorTabPane tabbedPane = (EditorTabPane) e.getSource();
+			EditorTabManager tabbedPane = (EditorTabManager) e.getSource();
 			
 			EditorTab selectedTab = tabbedPane.getSelectedComponent();
 			
