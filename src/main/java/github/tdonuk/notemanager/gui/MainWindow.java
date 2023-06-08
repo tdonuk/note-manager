@@ -10,9 +10,9 @@ import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.constant.MenuShortcut;
 import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.gui.container.Panel;
-import github.tdonuk.notemanager.gui.util.SearchUtils;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
+import github.tdonuk.notemanager.util.SearchWorker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
@@ -111,6 +111,8 @@ public final class MainWindow extends JFrame {
 	private JPanel searchBar;
 	private JTextField searchField;
 	
+	private JProgressBar progressBar = new JProgressBar();
+	
 	private EditorTabManager tabManager;
 	
 	private void init() throws IOException {
@@ -158,6 +160,17 @@ public final class MainWindow extends JFrame {
 		southWestPanel.add(systemInfoLabel);
 		
 		JPanel southEastPanel = new Panel();
+		
+		JPanel progressBarPanel = new Panel();
+		progressBarPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+		progressBarPanel.setSize(progressBarPanel.getWidth(), 20);
+		southEastPanel.add(progressBarPanel);
+		
+		progressBar.setVisible(false);
+		progressBar.setForeground(Color.black);
+		progressBar.setBorderPainted(false);
+		progressBarPanel.add(progressBar);
+		
 		southEastPanel.add(statusLabel);
 		
 		southEastPanel.add(currentPositionLabel);
@@ -191,15 +204,18 @@ public final class MainWindow extends JFrame {
 		searchField = new CustomTextField(20);
 		
 		searchField.getDocument().addDocumentListener(new DocumentListener() {
+			private SearchWorker searchWorker;
+			
 			private void performSearch() {
-				updateState(EditorState.WAITING);
+				if (searchWorker != null && !searchWorker.isDone()) {
+					searchWorker.cancel(true);
+				}
 				
-				Editor editor = tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor();
+				searchWorker = new SearchWorker(tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor(), searchField.getText(), progressBar);
 				
-				new Thread(() -> SearchUtils.markAll(editor, searchField.getText())).start();
-				
-				updateState(EditorState.READY);
+				searchWorker.execute();
 			}
+			
 			@Override
 			public void insertUpdate(DocumentEvent e) {
 				performSearch();
@@ -213,7 +229,6 @@ public final class MainWindow extends JFrame {
 			@Override
 			public void changedUpdate(DocumentEvent e) {
 			}
-			
 		});
 		
 		JButton next = new Button("Next");

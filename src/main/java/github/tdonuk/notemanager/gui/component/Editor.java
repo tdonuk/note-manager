@@ -9,12 +9,6 @@ public class Editor extends RSyntaxTextArea {
     @SneakyThrows
     public Editor() {
         super();
-        
-        this.setMarkAllOnOccurrenceSearches(true);
-        this.setMarkOccurrences(true);
-        
-        this.setLineWrap(false);
-        this.setWrapStyleWord(false);
     }
     
     public void undo() {
