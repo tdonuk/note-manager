@@ -175,7 +175,7 @@ public final class MainWindow extends JFrame {
 		
 		southEastPanel.add(currentPositionLabel);
 		currentPositionLabel.setBorder(new EmptyBorder(0, 10, 0, 10));
-		currentPositionLabel.setToolTipText("Current line : column");
+		currentPositionLabel.setToolTipText("Current position");
 		
 		southEastPanel.add(totalLinesLabel);
 		totalLinesLabel.setBorder(new EmptyBorder(0, 0, 0, 2));

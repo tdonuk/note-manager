@@ -11,10 +11,10 @@ import java.io.IOException;
 public class NoteManagerApp {
 	public static void main(String[] args) throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
 		for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-			log.info(info.getName()); // to see all look and feel alternatives
+			log.info("found Look & Feel: "+info.getName()); // to see all look and feel alternatives
 			if ("Windows".equals(info.getName()) || "GTK+".equals(info.getName())) { // Gui style
+				log.info(info.getName() + " will be selected as system default");
 				UIManager.setLookAndFeel(info.getClassName());
-				break;
 			}
 		}
 		MainWindow mainWindow = MainWindow.getInstance();
