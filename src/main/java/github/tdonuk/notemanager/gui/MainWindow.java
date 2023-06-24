@@ -383,14 +383,14 @@ public final class MainWindow extends JFrame {
 	
 	private void updatePositionInformation(Editor editor) {
 		int totalLines = editor.getLineCount();
-		int totalCharacters = editor.getText().length();
+		int totalCharacters = editor.getText().replaceAll("\n", "").length();
 		int currentLine = editor.getCaretLineNumber() + 1;
 		int currentColumn = editor.getCaretOffsetFromLineStart();
 		
 		totalLinesLabel.setText("lines: " + totalLines);
 		totalCharactersLabel.setText("length: " + totalCharacters);
 		
-		currentPositionLabel.setText(currentLine + " : " + currentColumn);
+		currentPositionLabel.setText("Ln:" + currentLine + " Col:" + currentColumn);
 	}
 	
 	private EditorTab createTab(File file) throws IOException {
