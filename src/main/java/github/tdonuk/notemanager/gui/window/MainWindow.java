@@ -1,7 +1,8 @@
-package github.tdonuk.notemanager.gui;
+package github.tdonuk.notemanager.gui.window;
 
 import github.tdonuk.notemanager.constant.Application;
 import github.tdonuk.notemanager.exception.CustomException;
+import github.tdonuk.notemanager.gui.AbstractWindow;
 import github.tdonuk.notemanager.gui.component.Button;
 import github.tdonuk.notemanager.gui.component.CustomTextField;
 import github.tdonuk.notemanager.gui.component.Editor;
@@ -23,83 +24,18 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.StringJoiner;
 
 @Slf4j
-public final class MainWindow extends JFrame {
+public final class MainWindow extends AbstractWindow {
 	private static MainWindow instance;
 	
-	private MainWindow() throws IOException {
-		this.setSize(3*EnvironmentUtils.screenWidth()/4, 3*EnvironmentUtils.screenHeight()/4);
-		this.setLocationRelativeTo(null); // to create the window at the center of the screen
-		this.setTitle(Application.NAME);
-		this.setFont(Application.PRIMARY_FONT);
-		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-		
+	private MainWindow() {
 		init();
-		
-		this.addWindowListener(new WindowListener() {
-			@Override
-			public void windowOpened(WindowEvent e) {
-				log.info("app started");
-				
-				tabManager.getTabs().values().stream().findAny().orElseThrow(() -> new RuntimeException("app failed to start")).getEditorContainer().getEditorPane().getEditor().requestFocus(); // open window as focused to editor and ready-to-write
-			}
-			
-			@Override
-			public void windowClosing(WindowEvent e) {
-				log.info("main window is closing");
-				StringJoiner stringJoiner = new StringJoiner("\n", "\n", "\n");
-				tabManager.getTabs().values().forEach(tab -> {
-					if(tab.hasDiff()) {
-						stringJoiner.add(tab.getTitle());
-					}
-				});
-				boolean confirmed = DialogUtils.askConfirmation("Your unsaved changes in these tabs: " + stringJoiner + " will be lost. Do you want to continue?", "Unsaved Changes");
-				if(confirmed) {
-					e.getWindow().dispose();
-					System.exit(0);
-				}
-			}
-			
-			@Override
-			public void windowClosed(WindowEvent e) {
-				log.info("main window closed");
-			}
-			
-			@Override
-			public void windowIconified(WindowEvent e) {
-				log.info("app iconified");
-			}
-			
-			@Override
-			public void windowDeiconified(WindowEvent e) {
-				log.info("app de-iconified");
-			}
-			
-			@Override
-			public void windowActivated(WindowEvent e) {
-				log.info("main window activated");
-				try {
-					EditorTab tab = tabManager.getSelectedComponent();
-					if(tab != null) tab.reload(false);
-				} catch(IOException ex) {
-					throw new CustomException(ex);
-				}
-			}
-			
-			@Override
-			public void windowDeactivated(WindowEvent e) {
-				log.info("main window deactivated");
-			}
-		});
 	}
 	
 	private static final JLabel statusLabel = new JLabel();
@@ -107,7 +43,6 @@ public final class MainWindow extends JFrame {
 	private final JLabel totalLinesLabel = new JLabel();
 	private final JLabel totalCharactersLabel = new JLabel("");
 	
-	private JPanel mainPanel;
 	private JPanel searchBar;
 	private JTextField searchField;
 	
@@ -115,37 +50,91 @@ public final class MainWindow extends JFrame {
 	
 	private EditorTabManager tabManager;
 	
-	private void init() throws IOException {
-		mainPanel = new Panel(new BorderLayout());
-		
-		this.setContentPane(mainPanel);
-		
-		initNorthPanel();
-		initWestPanel();
-		initEastPanel();
-		initSouthPanel();
-		initCenterPanel();
-		initMenus();
-		initSearchBar();
+	@Override
+	protected String title() {
+		return Application.NAME;
 	}
 	
-	private void initCenterPanel() throws IOException {
-  		JPanel centerPanel = new Panel(new BorderLayout());
-		centerPanel.setBorder(null);
-
-		tabManager = new EditorTabManager();
+	@Override
+	protected JComponent north() {
+		searchBar = new Panel();
 		
-		if(tabManager.getTabs().isEmpty()) {
-			createTab("New Document");
-		}
+		searchField = new CustomTextField(20);
 		
-		centerPanel.add(tabManager);
+		searchField.getDocument().addDocumentListener(new DocumentListener() {
+			private SearchWorker searchWorker;
+			
+			private void performSearch() {
+				if (searchWorker != null && !searchWorker.isDone()) {
+					searchWorker.cancel(true);
+				}
+				
+				searchWorker = new SearchWorker(tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor(), searchField.getText(), progressBar);
+				
+				searchWorker.execute();
+			}
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				performSearch();
+			}
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				performSearch();
+			}
+			
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				// Leave this blank
+			}
+		});
 		
-		mainPanel.add(centerPanel, BorderLayout.CENTER);
+		JButton next = new Button("Next");
+		next.setEnabled(false);
+		
+		JButton previous = new Button("Previous");
+		previous.setEnabled(false);
+		
+		Runnable doRemoveAllMarks = () -> {
+			Editor editor = tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor();
+			editor.getHighlighter().removeAllHighlights();
+		};
+		
+		JButton close = new Button("X");
+		close.setContentAreaFilled(false);
+		close.addActionListener(a -> {
+			searchBar.setVisible(false);
+			doRemoveAllMarks.run();
+		});
+		
+		searchBar.add(searchField);
+		searchBar.add(next);
+		searchBar.add(previous);
+		searchBar.add(close);
+		
+		searchBar.setFont(Application.PRIMARY_FONT);
+		searchBar.setToolTipText("Press ESC to close");
+		
+		searchBar.registerKeyboardAction(new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				searchBar.setVisible(false);
+				doRemoveAllMarks.run();
+			}
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+		
+		searchField.requestFocus();
+		searchField.selectAll();
+		
+		searchBar.setVisible(false);
+		
+		return searchBar;
 	}
 	
-	private void initSouthPanel() {
-  		JPanel southPanel = new Panel(new BorderLayout());
+	@Override
+	protected JComponent south() {
+		JPanel southPanel = new Panel(new BorderLayout());
 		
 		southPanel.setBorder(null);
 		
@@ -188,99 +177,41 @@ public final class MainWindow extends JFrame {
 		
 		southPanel.setFont(Application.SECONDARY_FONT);
 		
-		mainPanel.add(southPanel, BorderLayout.SOUTH);
+		return southPanel;
 	}
 	
-	private void initNorthPanel() {
-		JPanel northPanel = new Panel(new BorderLayout());
-		
-		
-		mainPanel.add(northPanel, BorderLayout.NORTH);
+	@Override
+	protected JComponent east() {
+		return new Panel();
 	}
 	
-	private void initSearchBar() {
-		searchBar = new Panel();
-		
-		searchField = new CustomTextField(20);
-		
-		searchField.getDocument().addDocumentListener(new DocumentListener() {
-			private SearchWorker searchWorker;
-			
-			private void performSearch() {
-				if (searchWorker != null && !searchWorker.isDone()) {
-					searchWorker.cancel(true);
-				}
-				
-				searchWorker = new SearchWorker(tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor(), searchField.getText(), progressBar);
-				
-				searchWorker.execute();
-			}
-			
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				performSearch();
-			}
-			
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				performSearch();
-			}
-			
-			@Override
-			public void changedUpdate(DocumentEvent e) {
-			}
-		});
-		
-		JButton next = new Button("Next");
-		next.setEnabled(false);
-		
-		JButton previous = new Button("Previous");
-		previous.setEnabled(false);
-		
-		Runnable doRemoveAllMarks = () -> {
-			Editor editor = tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor();
-			editor.getHighlighter().removeAllHighlights();
-		};
-		
-		JButton close = new Button("X");
-		close.setContentAreaFilled(false);
-		close.addActionListener(a -> {
-			searchBar.setVisible(false);
-			doRemoveAllMarks.run();
-		});
-		
-		searchBar.add(searchField);
-		searchBar.add(next);
-		searchBar.add(previous);
-		searchBar.add(close);
-		
-		searchBar.setFont(Application.PRIMARY_FONT);
-		searchBar.setToolTipText("Press ESC to close");
-		
-		searchBar.registerKeyboardAction(new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				searchBar.setVisible(false);
-				doRemoveAllMarks.run();
-			}
-		}, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),JComponent.WHEN_IN_FOCUSED_WINDOW);
-		
-		mainPanel.add(searchBar, BorderLayout.NORTH);
-		searchField.requestFocus();
-		searchField.selectAll();
-		
-		searchBar.setVisible(false);
+	@Override
+	protected JComponent west() {
+		return new Panel();
 	}
 	
-	private void initWestPanel() {
-		// TODO: add components to the west side of the main window
+	@Override
+	protected JComponent center() {
+		JPanel centerPanel = new Panel(new BorderLayout());
+		centerPanel.setBorder(null);
+		
+		tabManager = new EditorTabManager();
+		
+		if(tabManager.getTabs().isEmpty()) {
+			try {
+				createTab("New Document");
+			} catch(IOException e) {
+				throw new CustomException(e);
+			}
+		}
+		
+		centerPanel.add(tabManager);
+		
+		return centerPanel;
 	}
 	
-	private void initEastPanel() {
-		// TODO: add components to the east side of the main window
-	}
-	
-	private void initMenus() {
+	@Override
+	protected JMenuBar menu() {
 		JMenuBar topBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File", true);
 		JMenu editMenu = new JMenu("Edit", true);
@@ -291,7 +222,37 @@ public final class MainWindow extends JFrame {
 		initFileMenu(fileMenu);
 		initEditMenu(editMenu);
 		
-		this.setJMenuBar(topBar);
+		return topBar;
+	}
+	
+	@Override
+	protected void beforeClosing(WindowEvent e) {
+		StringJoiner stringJoiner = new StringJoiner("\n", "\n", "\n");
+		tabManager.getTabs().values().forEach(tab -> {
+			if(tab.hasDiff()) {
+				stringJoiner.add(tab.getTitle());
+			}
+		});
+		boolean confirmed = DialogUtils.askConfirmation("Your unsaved changes in these tabs: " + stringJoiner + " will be lost. Do you want to continue?", "Unsaved Changes");
+		if(confirmed) {
+			e.getWindow().dispose();
+			System.exit(0);
+		}
+	}
+	
+	@Override
+	protected void afterOpened(WindowEvent e) {
+		tabManager.getTabs().values().stream().findAny().orElseThrow(() -> new RuntimeException("app failed to start")).getEditorContainer().getEditorPane().getEditor().requestFocus(); // open window as focused to editor and ready-to-write
+	}
+	
+	@Override
+	protected void afterMaximized(WindowEvent e) {
+		try {
+			EditorTab tab = tabManager.getSelectedComponent();
+			if(tab != null) tab.reload(false);
+		} catch(IOException ex) {
+			throw new CustomException(ex);
+		}
 	}
 	
 	private void initEditMenu(JMenu editMenu) {
@@ -370,7 +331,7 @@ public final class MainWindow extends JFrame {
 		fileMenu.add(menuItemSave);
 	}
 	
-	public static MainWindow getInstance() throws IOException {
+	public static MainWindow getInstance() {
 		if(instance == null) instance = new MainWindow();
 		return instance;
 	}
@@ -383,7 +344,7 @@ public final class MainWindow extends JFrame {
 	
 	private void updatePositionInformation(Editor editor) {
 		int totalLines = editor.getLineCount();
-		int totalCharacters = editor.getText().replaceAll("\n", "").length();
+		int totalCharacters = editor.getText().replace("\n", "").length();
 		int currentLine = editor.getCaretLineNumber() + 1;
 		int currentColumn = editor.getCaretOffsetFromLineStart();
 		
@@ -413,7 +374,7 @@ public final class MainWindow extends JFrame {
 		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
 		
 		editor.addCaretListener(c -> updatePositionInformation(editor));
-		addDragListenerToEditor(editor);
+		addDragListenerToEditor(editor); // open file by drag & drop
 		
 		tabManager.setSelectedTab(tab);
 	}
@@ -444,16 +405,16 @@ public final class MainWindow extends JFrame {
 			
 			@Override
 			public void drop(DropTargetDropEvent dtde) {
-				java.util.List<DataFlavor> datas = dtde.getCurrentDataFlavorsAsList();
+				List<DataFlavor> droppedDataList = dtde.getCurrentDataFlavorsAsList();
 				
 				Transferable tr = dtde.getTransferable();
 				
-				for(DataFlavor data : datas) {
+				for(DataFlavor data : droppedDataList) {
 					if(data.isFlavorJavaFileListType()) {
 						dtde.acceptDrop(DnDConstants.ACTION_COPY);
 						
 						try {
-							java.util.List<?> list = (List<?>) tr.getTransferData(data);
+							List<?> list = (List<?>) tr.getTransferData(data);
 							
 							if(list.size() != 1) {
 								dtde.dropComplete(false);
@@ -475,4 +436,5 @@ public final class MainWindow extends JFrame {
 			}
 		});
 	}
+	
 }

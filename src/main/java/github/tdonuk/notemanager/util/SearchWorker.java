@@ -1,7 +1,7 @@
 package github.tdonuk.notemanager.util;
 
 import github.tdonuk.notemanager.exception.CustomException;
-import github.tdonuk.notemanager.gui.MainWindow;
+import github.tdonuk.notemanager.gui.window.MainWindow;
 import github.tdonuk.notemanager.gui.component.Editor;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.util.SearchResult;
@@ -16,11 +16,17 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-public class SearchWorker extends SwingWorker<Void, ProgressDTO> {
+public class SearchWorker extends SwingWorker<Void, Progress> {
 	private final Editor editor;
 	private final String searchText;
 	private final JProgressBar progress;
 	
+	/**
+	 * Searching util for default Editor
+	 * @param editor Where to search
+	 * @param searchText What to search
+	 * @param progress Where to show progress of the searching process (Or null in unwanted)
+	 */
 	public SearchWorker(Editor editor, String searchText, JProgressBar progress) {
 		this.editor = editor;
 		this.searchText = searchText;
@@ -29,13 +35,15 @@ public class SearchWorker extends SwingWorker<Void, ProgressDTO> {
 	
 	@Override
 	protected Void doInBackground() {
+		if(editor.getText().isEmpty()) return null;
+		
 		MainWindow.updateState(EditorState.WAITING);
 		
 		List<SearchResult> results = SearchUtils.findAll(editor, searchText);
 		
 		if(progress != null) {
 			progress.setVisible(true);
-			progress.setMaximum(results.size()-1);
+			progress.setMaximum(results.size());
 			progress.setMinimum(0);
 			progress.setStringPainted(true);
 			progress.setForeground(Color.black);
@@ -46,7 +54,7 @@ public class SearchWorker extends SwingWorker<Void, ProgressDTO> {
 				break;
 			}
 			
-			process(List.of(new ProgressDTO(0,0, results.indexOf(r))));
+			publish(new Progress(0,0, results.indexOf(r)));
 			
 			new Thread(() -> {
 				try {
@@ -62,11 +70,11 @@ public class SearchWorker extends SwingWorker<Void, ProgressDTO> {
 	}
 	
 	@Override
-	protected void process(List<ProgressDTO> chunks) {
-		ProgressDTO value = chunks.get(chunks.size() - 1);
+	protected void process(List<Progress> chunks) {
+		Progress value = chunks.get(chunks.size() - 1);
 		if(progress != null) {
 			progress.setValue(value.getCurrent());
-			progress.setString(BigDecimal.valueOf(progress.getPercentComplete()*100).setScale(2, RoundingMode.HALF_UP) +"%");
+			progress.setString(BigDecimal.valueOf(progress.getPercentComplete()*100).setScale(2, RoundingMode.HALF_UP) +"%"); // percent
 		}
 	}
 	
@@ -81,7 +89,7 @@ public class SearchWorker extends SwingWorker<Void, ProgressDTO> {
 
 @AllArgsConstructor
 @Data
-class ProgressDTO {
+class Progress {
 	private int min;
 	private int max;
 	private int current;

@@ -1,7 +1,7 @@
 package github.tdonuk.notemanager.gui.component;
 
 import github.tdonuk.notemanager.exception.CustomException;
-import github.tdonuk.notemanager.gui.MainWindow;
+import github.tdonuk.notemanager.gui.window.MainWindow;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.util.DialogUtils;
