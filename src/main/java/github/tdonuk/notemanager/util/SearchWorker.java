@@ -25,7 +25,7 @@ public class SearchWorker extends SwingWorker<Void, Progress> {
 	 * Searching util for default Editor
 	 * @param editor Where to search
 	 * @param searchText What to search
-	 * @param progress Where to show progress of the searching process (Or null in unwanted)
+	 * @param progress Where to show progress of the searching process (Or null if unwanted)
 	 */
 	public SearchWorker(Editor editor, String searchText, JProgressBar progress) {
 		this.editor = editor;
