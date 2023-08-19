@@ -14,6 +14,7 @@ import github.tdonuk.notemanager.gui.container.Panel;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
 import github.tdonuk.notemanager.util.SearchWorker;
+import github.tdonuk.notemanager.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
@@ -42,11 +43,12 @@ public final class MainWindow extends AbstractWindow {
 	private final JLabel currentPositionLabel = new JLabel();
 	private final JLabel totalLinesLabel = new JLabel();
 	private final JLabel totalCharactersLabel = new JLabel("");
+	private final JLabel selectedTextLabel = new JLabel();
 	
 	private JPanel searchBar;
 	private JTextField searchField;
 	
-	private JProgressBar progressBar = new JProgressBar();
+	private final JProgressBar progressBar = new JProgressBar();
 	
 	private EditorTabManager tabManager;
 	
@@ -161,7 +163,8 @@ public final class MainWindow extends AbstractWindow {
 		progressBarPanel.add(progressBar);
 		
 		southEastPanel.add(statusLabel);
-		
+		southEastPanel.add(selectedTextLabel);
+
 		southEastPanel.add(currentPositionLabel);
 		currentPositionLabel.setBorder(new EmptyBorder(0, 10, 0, 10));
 		currentPositionLabel.setToolTipText("Current position");
@@ -336,7 +339,8 @@ public final class MainWindow extends AbstractWindow {
 		return instance;
 	}
 	
-	public static void updateState(EditorState state) {
+	public static void
+	updateState(EditorState state) {
 		statusLabel.setText(state.getLabel());
 		
 		instance.setEnabled(!state.isShouldBlockUi());
@@ -347,11 +351,12 @@ public final class MainWindow extends AbstractWindow {
 		int totalCharacters = editor.getText().replace("\n", "").length();
 		int currentLine = editor.getCaretLineNumber() + 1;
 		int currentColumn = editor.getCaretOffsetFromLineStart();
-		
+		int selectedTextSize = StringUtils.length(editor.getSelectedText());
+
 		totalLinesLabel.setText("lines: " + totalLines);
 		totalCharactersLabel.setText("length: " + totalCharacters);
-		
 		currentPositionLabel.setText("Ln:" + currentLine + " Col:" + currentColumn);
+		selectedTextLabel.setText("Sel: "+selectedTextSize);
 	}
 	
 	private EditorTab createTab(File file) throws IOException {

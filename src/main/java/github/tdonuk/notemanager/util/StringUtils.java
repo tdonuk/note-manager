@@ -81,5 +81,9 @@ public class StringUtils {
 		return digest.digest(
 				raw.getBytes(StandardCharsets.UTF_8));
 	}
-	
+
+	public static int length(String text){
+		if(text==null) return 0;
+		return text.length();
+	}
 }

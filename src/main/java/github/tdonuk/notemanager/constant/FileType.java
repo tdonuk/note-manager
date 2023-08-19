@@ -17,7 +17,7 @@ public enum FileType {
 	
 	public static FileType findByExtension(String extension) {
 		try {
-			return Arrays.stream(values()).filter(v -> v.getExtension().equals(extension)).findAny().orElse(TXT);
+			return Arrays.stream(values()).filter(v -> v.getExtension().equalsIgnoreCase(extension)).findAny().orElse(TXT);
 		} catch(Exception e) {
 			return TXT;
 		}

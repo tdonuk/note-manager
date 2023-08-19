@@ -24,7 +24,7 @@ public class EditorTabManager extends JTabbedPane {
 	
 	public EditorTabManager() {
 		super();
-		
+		setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		this.addChangeListener(e -> {
 			EditorTabManager tabbedPane = (EditorTabManager) e.getSource();
 			
