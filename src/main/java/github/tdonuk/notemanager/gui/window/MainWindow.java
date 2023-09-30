@@ -231,13 +231,19 @@ public final class MainWindow extends AbstractWindow {
 	@Override
 	protected void beforeClosing(WindowEvent e) {
 		StringJoiner stringJoiner = new StringJoiner("\n", "\n", "\n");
+		stringJoiner.setEmptyValue("");
 		tabManager.getTabs().values().forEach(tab -> {
 			if(tab.hasDiff()) {
 				stringJoiner.add(tab.getTitle());
 			}
 		});
-		boolean confirmed = DialogUtils.askConfirmation("Your unsaved changes in these tabs: " + stringJoiner + " will be lost. Do you want to continue?", "Unsaved Changes");
-		if(confirmed) {
+		
+		boolean exitFlag = true;
+		if(stringJoiner.length() != 0) {
+			exitFlag = DialogUtils.askConfirmation(stringJoiner + "\nYour unsaved changes in above tabs will be lost. Do you want to continue?", "Unsaved Changes");
+		}
+		
+		if(exitFlag) {
 			e.getWindow().dispose();
 			System.exit(0);
 		}
