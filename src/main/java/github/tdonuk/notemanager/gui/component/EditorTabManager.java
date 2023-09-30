@@ -103,7 +103,7 @@ public class EditorTabManager extends JTabbedPane {
 		
 		// this keeps index part of the tab name updated
 		// example: there is two tabs with names like "New Document.txt" and "New Document.txt (1)"
-		// when user closes "New Document.txt", other tab now do not need to indicate its index with "(1)"
+		// when user closes "New Document.txt", other tab now does not need to indicate its index with "(1)"
 		// so we should update its tab title with the same name of its opened file
 		for(EditorTab tab : tabs.values()) {
  			if(getTabsWithFileName(tab.getOpenedFile().getName()).size() == 1) {
