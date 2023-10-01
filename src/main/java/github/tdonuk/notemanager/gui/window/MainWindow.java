@@ -3,14 +3,13 @@ package github.tdonuk.notemanager.gui.window;
 import github.tdonuk.notemanager.constant.Application;
 import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.AbstractWindow;
-import github.tdonuk.notemanager.gui.component.Button;
-import github.tdonuk.notemanager.gui.component.CustomTextField;
 import github.tdonuk.notemanager.gui.component.Editor;
 import github.tdonuk.notemanager.gui.component.EditorTabManager;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.constant.MenuShortcut;
 import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.gui.container.Panel;
+import github.tdonuk.notemanager.gui.fragment.SearchPanel;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
 import github.tdonuk.notemanager.util.SearchWorker;
@@ -19,13 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.*;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -47,7 +44,7 @@ public final class MainWindow extends AbstractWindow {
 	private final JLabel totalCharactersLabel = new JLabel("");
 	private final JLabel selectedTextLabel = new JLabel();
 	
-	private JPanel searchBar;
+	private SearchPanel searchBar;
 	private JTextField searchField;
 	
 	private final JProgressBar progressBar = new JProgressBar();
@@ -61,77 +58,22 @@ public final class MainWindow extends AbstractWindow {
 	
 	@Override
 	protected JComponent north() {
-		searchBar = new Panel();
-		
-		searchField = new CustomTextField(20);
-		
-		searchField.getDocument().addDocumentListener(new DocumentListener() {
-			private SearchWorker searchWorker;
-			
-			private void performSearch() {
-				if (searchWorker != null && !searchWorker.isDone()) {
-					searchWorker.cancel(true);
-				}
-				
-				searchWorker = new SearchWorker(tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor(), searchField.getText(), progressBar);
-				
-				searchWorker.execute();
-			}
-			
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				performSearch();
-			}
-			
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				performSearch();
-			}
-			
-			@Override
-			public void changedUpdate(DocumentEvent e) {
-				// Leave this blank
-			}
-		});
-		
-		JButton next = new Button("Next");
-		next.setEnabled(false);
-		
-		JButton previous = new Button("Previous");
-		previous.setEnabled(false);
-		
 		Runnable doRemoveAllMarks = () -> {
 			Editor editor = tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor();
 			editor.getHighlighter().removeAllHighlights();
 		};
 		
-		JButton close = new Button("X");
-		close.setContentAreaFilled(false);
-		close.addActionListener(a -> {
-			searchBar.setVisible(false);
-			doRemoveAllMarks.run();
-		});
+		Runnable doSearch = () -> {
+			SearchWorker searchWorker = new SearchWorker(tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor(), searchField.getText(), progressBar);
+			
+			searchWorker.execute();
+		};
 		
-		searchBar.add(searchField);
-		searchBar.add(next);
-		searchBar.add(previous);
-		searchBar.add(close);
-		
-		searchBar.setFont(Application.PRIMARY_FONT);
-		searchBar.setToolTipText("Press ESC to close");
-		
-		searchBar.registerKeyboardAction(new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				searchBar.setVisible(false);
-				doRemoveAllMarks.run();
-			}
-		}, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-		
-		searchField.requestFocus();
-		searchField.selectAll();
+		searchBar = new SearchPanel(doRemoveAllMarks, doSearch);
 		
 		searchBar.setVisible(false);
+		
+		this.searchField = searchBar.getSearchInput();
 		
 		return searchBar;
 	}
