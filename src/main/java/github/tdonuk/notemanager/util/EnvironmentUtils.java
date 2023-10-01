@@ -1,10 +1,12 @@
 package github.tdonuk.notemanager.util;
 
+import github.tdonuk.notemanager.exception.CustomException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
+import java.io.File;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class EnvironmentUtils {
@@ -52,5 +54,27 @@ public final class EnvironmentUtils {
 	
 	public static String userDir() {
 		return System.getProperty("user.home");
+	}
+
+	public static String appDataDir() {
+		String path;
+		String osName = osName();
+		if (osName.startsWith("Windows")) {
+			String appDataDir = System.getenv("LOCALAPPDATA");
+
+			path = StringUtils.isBlank(appDataDir) ? userDir() : appDataDir;
+		} else if (osName.startsWith("Linux")) {
+			String xdgDataHome = System.getenv("XDG_DATA_HOME");
+
+			path = StringUtils.isBlank(xdgDataHome) ? userDir() + File.separator + ".local" + File.separator + "share" : xdgDataHome;
+		} else {
+			throw new CustomException("os not supported: " + osName);
+		}
+
+		return path + File.separator + "NoteManager";
+	}
+
+	public static String stateFileDir() {
+		return appDataDir() + File.separator + "state.json";
 	}
 }

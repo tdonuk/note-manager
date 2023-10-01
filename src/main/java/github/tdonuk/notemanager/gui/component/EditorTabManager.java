@@ -108,7 +108,8 @@ public class EditorTabManager extends JTabbedPane {
 		for(EditorTab tab : tabs.values()) {
  			if(getTabsWithFileName(tab.getOpenedFile().getName()).size() == 1) {
 				tab.setTitle(tab.getOpenedFile().getName());
-				setTabComponentAt(indexOfComponent(tab), tab.getHeader());
+				int idx = indexOfComponent(tab);
+				if(idx >= 0) setTabComponentAt(idx, tab.getHeader());
 			}
 		}
 	}

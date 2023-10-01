@@ -1,5 +1,6 @@
 package github.tdonuk.notemanager.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -85,5 +86,20 @@ public class StringUtils {
 	public static int length(String text){
 		if(text==null) return 0;
 		return text.length();
+	}
+
+	public static boolean isBlank(String s) {
+		return s == null || s.isBlank();
+	}
+
+	public static String stringifyToJSON(Object o) throws IOException {
+		StringWriter sw = new StringWriter();
+		objectMapper.writerWithDefaultPrettyPrinter().writeValue(sw, o);
+
+		return sw.toString();
+	}
+
+	public static <T> Object parseJSON(String json, Class<T> clazz) throws JsonProcessingException {
+		return objectMapper.readValue(json, clazz);
 	}
 }

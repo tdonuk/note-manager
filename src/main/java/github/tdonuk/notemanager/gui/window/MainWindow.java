@@ -10,10 +10,7 @@ import github.tdonuk.notemanager.gui.constant.MenuShortcut;
 import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.gui.container.Panel;
 import github.tdonuk.notemanager.gui.fragment.SearchPanel;
-import github.tdonuk.notemanager.util.DialogUtils;
-import github.tdonuk.notemanager.util.EnvironmentUtils;
-import github.tdonuk.notemanager.util.SearchWorker;
-import github.tdonuk.notemanager.util.StringUtils;
+import github.tdonuk.notemanager.util.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
@@ -25,19 +22,14 @@ import java.awt.dnd.*;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.StringJoiner;
 
 @Slf4j
 public final class MainWindow extends AbstractWindow {
 	private static MainWindow instance;
-	
-	private MainWindow() {
-		init();
-		
-		addDefaultDragListener(tabManager); // open file by drag & drop
-	}
-	
+
 	private static final JLabel statusLabel = new JLabel("0");
 	private final JLabel currentPositionLabel = new JLabel("Ln:0 Col:0");
 	private final JLabel totalLinesLabel = new JLabel("0");
@@ -191,8 +183,22 @@ public final class MainWindow extends AbstractWindow {
 		}
 		
 		if(exitFlag) {
-			e.getWindow().dispose();
-			System.exit(0);
+			try {
+				StateDTO state = new StateDTO();
+				List<FileHistDTO> fileHists = tabManager.getTabs().values().stream().filter(t -> !t.isTempFlag()).map(t -> new FileHistDTO(t.getTitle(), t.getOpenedFile().getAbsolutePath())).toList();
+				state.setOpenedFiles(fileHists);
+				state.setLeaveDate(LocalDateTime.now().toString());
+
+				FileUtils.writeFile(EnvironmentUtils.stateFileDir(), StringUtils.stringifyToJSON(state));
+
+				e.getWindow().dispose();
+				System.exit(0);
+			} catch(Exception exc) {
+				exc.printStackTrace(); // TODO: implement some logging instead
+
+				e.getWindow().dispose();
+				System.exit(0);
+			}
 		}
 	}
 	
@@ -292,8 +298,7 @@ public final class MainWindow extends AbstractWindow {
 		return instance;
 	}
 	
-	public static void
-	updateState(EditorState state) {
+	public static void updateState(EditorState state) {
 		statusLabel.setText(state.getLabel());
 		
 		instance.setEnabled(!state.isShouldBlockUi());
@@ -316,6 +321,8 @@ public final class MainWindow extends AbstractWindow {
 		EditorTab tab = tabManager.addTab(file);
 		
 		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
+
+		addDefaultDragListener(editor);
 		
 		editor.addCaretListener(c -> updatePositionInformation(editor));
 		
@@ -396,6 +403,20 @@ public final class MainWindow extends AbstractWindow {
 		for(Component child : component.getComponents()) {
 			addDefaultDragListener((JComponent) child);
 		}
+	}
+
+	public void initializeWithState(StateDTO state) throws IOException {
+		initializeWithoutState();
+
+		tabManager.removeAll();
+
+		for(FileHistDTO fileHist: state.getOpenedFiles()) {
+			createTab(new File(fileHist.getOpenedFile()));
+		}
+	}
+
+	public void initializeWithoutState() {
+		init();
 	}
 	
 }
