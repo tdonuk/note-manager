@@ -37,6 +37,8 @@ public final class MainWindow extends AbstractWindow {
 	
 	private MainWindow() {
 		init();
+		
+		addDefaultDragListener(tabManager); // open file by drag & drop
 	}
 	
 	private static final JLabel statusLabel = new JLabel();
@@ -368,7 +370,11 @@ public final class MainWindow extends AbstractWindow {
 	private EditorTab createTab(File file) throws IOException {
 		EditorTab tab = tabManager.addTab(file);
 		
-		initTabEditor(tab);
+		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
+		
+		editor.addCaretListener(c -> updatePositionInformation(editor));
+		
+		tabManager.setSelectedTab(tab);
 		
 		return tab;
 	}
@@ -376,22 +382,17 @@ public final class MainWindow extends AbstractWindow {
 	private EditorTab createTab(String title) throws IOException {
 		EditorTab tab = tabManager.addTab(title);
 		
-		initTabEditor(tab);
+		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
+		
+		editor.addCaretListener(c -> updatePositionInformation(editor));
+		
+		tabManager.setSelectedTab(tab);
 		
 		return tab;
 	}
 	
-	private void initTabEditor(EditorTab tab) {
-		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
-		
-		editor.addCaretListener(c -> updatePositionInformation(editor));
-		addDragListenerToEditor(editor); // open file by drag & drop
-		
-		tabManager.setSelectedTab(tab);
-	}
-	
-	private void addDragListenerToEditor(Editor editor) {
-		new DropTarget(editor, new DropTargetListener() {
+	private void addDefaultDragListener(JComponent component) {
+		new DropTarget(component, new DropTargetListener() {
 			@Override
 			public void dragEnter(DropTargetDragEvent dtde) {
 				log.info("drag entered: " + dtde.getSource());
@@ -446,6 +447,10 @@ public final class MainWindow extends AbstractWindow {
 				updateState(EditorState.READY);
 			}
 		});
+		
+		for(Component child : component.getComponents()) {
+			addDefaultDragListener((JComponent) child);
+		}
 	}
 	
 }
