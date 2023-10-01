@@ -38,11 +38,11 @@ public final class MainWindow extends AbstractWindow {
 		addDefaultDragListener(tabManager); // open file by drag & drop
 	}
 	
-	private static final JLabel statusLabel = new JLabel();
-	private final JLabel currentPositionLabel = new JLabel();
-	private final JLabel totalLinesLabel = new JLabel();
-	private final JLabel totalCharactersLabel = new JLabel("");
-	private final JLabel selectedTextLabel = new JLabel();
+	private static final JLabel statusLabel = new JLabel("0");
+	private final JLabel currentPositionLabel = new JLabel("Ln:0 Col:0");
+	private final JLabel totalLinesLabel = new JLabel("0");
+	private final JLabel totalCharactersLabel = new JLabel("0");
+	private final JLabel selectedTextLabel = new JLabel("0");
 	
 	private SearchPanel searchBar;
 	private JTextField searchField;
@@ -107,17 +107,20 @@ public final class MainWindow extends AbstractWindow {
 		progressBarPanel.add(progressBar);
 		
 		southEastPanel.add(statusLabel);
+		statusLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+		
 		southEastPanel.add(selectedTextLabel);
+		selectedTextLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		southEastPanel.add(currentPositionLabel);
-		currentPositionLabel.setBorder(new EmptyBorder(0, 10, 0, 10));
+		currentPositionLabel.setBorder(new EmptyBorder(0, 5, 0, 5));
 		currentPositionLabel.setToolTipText("Current position");
 		
 		southEastPanel.add(totalLinesLabel);
-		totalLinesLabel.setBorder(new EmptyBorder(0, 0, 0, 2));
+		totalLinesLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		
 		southEastPanel.add(totalCharactersLabel);
-		totalCharactersLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
+		totalCharactersLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		
 		southPanel.add(southWestPanel, BorderLayout.WEST);
 		southPanel.add(southEastPanel, BorderLayout.EAST);
@@ -298,7 +301,7 @@ public final class MainWindow extends AbstractWindow {
 	
 	private void updatePositionInformation(Editor editor) {
 		int totalLines = editor.getLineCount();
-		int totalCharacters = editor.getText().replace("\n", "").length();
+		int totalCharacters = editor.getText().length();
 		int currentLine = editor.getCaretLineNumber() + 1;
 		int currentColumn = editor.getCaretOffsetFromLineStart();
 		int selectedTextSize = StringUtils.length(editor.getSelectedText());
