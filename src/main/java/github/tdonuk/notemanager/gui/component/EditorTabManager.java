@@ -1,74 +1,88 @@
 package github.tdonuk.notemanager.gui.component;
 
+import github.tdonuk.notemanager.constant.FileType;
+import github.tdonuk.notemanager.domain.FileHist;
 import github.tdonuk.notemanager.exception.CustomException;
-import github.tdonuk.notemanager.gui.window.MainWindow;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.container.EditorTab;
+import github.tdonuk.notemanager.gui.event.constant.EventCode;
+import github.tdonuk.notemanager.gui.event.domain.TabEvent;
+import github.tdonuk.notemanager.gui.event.listener.TabListener;
+import github.tdonuk.notemanager.gui.window.MainWindow;
 import github.tdonuk.notemanager.util.DialogUtils;
+import github.tdonuk.notemanager.util.EnvironmentUtils;
+import github.tdonuk.notemanager.util.HistoryCache;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
+import java.util.Timer;
+import java.util.*;
+import java.util.function.Consumer;
 
 @Getter
 @Slf4j
-public class EditorTabManager extends JTabbedPane {
-	private final Map<File, EditorTab> tabs = new HashMap<>();
+public class EditorTabManager extends JTabbedPane implements TabManager<EditorTab, FileHist> {
+	private final Map<FileHist, EditorTab> tabs = new HashMap<>();
 	
-	public EditorTabManager() {
+	private final List<TabListener> eventListeners = new ArrayList<>();
+	
+	private final transient Timer headerUpdater = new Timer("headerUpdater");
+	
+	public EditorTabManager(Consumer<EditorTab> selectionHandler) {
 		super();
 		setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-		this.addChangeListener(e -> {
-			EditorTabManager tabbedPane = (EditorTabManager) e.getSource();
-			
-			EditorTab selectedTab = tabbedPane.getSelectedComponent();
-			
-			if(selectedTab != null) {
-				log.info("selected tab: " + selectedTab.getTitle());
-				
-				try {
-					reloadTab(selectedTab);
-				} catch(IOException ex) {
-					throw new CustomException(ex);
-				}
+		
+		addDefaultListeners(selectionHandler);
+		
+		headerUpdater.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				log.debug("checking for diffs");
+				revalidateTabComponents();
 			}
-		});
+		}, 0, 1500);
 	}
 	
-	public EditorTab addTab(@NonNull File file) throws IOException {
-		if(tabs.containsKey(file)) { // user opens a file that is already opened in a tab
+	@Override
+	public EditorTab addTab(FileHist file, boolean isTemporary) throws IOException {
+		if(isTemporary &&  file == null) {
+			File tempFile = new File(EnvironmentUtils.tempFilesDir(), makeTitleUnique("New Document", FileType.TXT.getExtension()));
+			
+			file = new FileHist(tempFile.getName(), tempFile.getAbsolutePath());
+		}
+		
+		if(tabs.containsKey(file)) { // user opens a file that is already opened in another tab
 			setSelectedTab(tabs.get(file));
 			return tabs.get(file);
 		}
 		
-		String title = makeTitleUnique(file);
+		File openedFile = new File(file.getOpenedFile());
+		String title = file.getTitle();
 		
-		if(existsWithFileName(file.getName())) { // user opens a file with name matching one of the already opened files filename
-			List<EditorTab> duplicates = getTabsWithFileName(file.getName());
-			duplicates.forEach(duplicate -> {
-				duplicate.setTitle(duplicate.getOpenedFile().getName() + " ("+duplicate.getOpenedFile().getAbsolutePath()+")");
-				setTitleAt(indexOfComponent(duplicate), duplicate.getTitle());
-			});
-		}
+		EditorTab tabToAdd = new EditorTab(file, isTemporary);
 		
-		EditorTab tabToAdd = new EditorTab(file, title);
+		Editor editor = tabToAdd.getEditorContainer().getEditorPane().getEditor();
+		
+		if(existsWithFileName(openedFile.getName())) tabToAdd.setDuplicated(true);
+		
+		addDefaultDragListener(editor);
 		
 		this.add(title, tabToAdd);
 		
-		return tabToAdd;
-	}
-	
-	public EditorTab addTab(@NonNull String title) throws IOException {
-		title = makeTitleUnique(title);
+		for(TabListener tabListener : eventListeners) {
+			tabListener.tabAdded(new TabEvent(EventCode.ADD_TAB, title, indexOfTab(title)));
+		}
 		
-		return addTab(new File(title));
+		return tabToAdd;
 	}
 	
 	@Override
@@ -76,12 +90,15 @@ public class EditorTabManager extends JTabbedPane {
 		setTabComponentAt(index, ((EditorTab) getComponentAt(index)).getHeader());
 	}
 	
+	/**
+	 * Never use this directly. this should be called via {@link #addTab(FileHist, boolean)}
+	 */
 	@Override
 	public Component add(String title, Component component) {
 		EditorTab tab = (EditorTab) component;
 		
 		Component added = super.add(title, tab);
-		tabs.put(tab.getOpenedFile(), tab);
+		tabs.put(tab.getFileHist(), tab);
 		
 		setTabComponentAt(indexOfComponent(added), ((EditorTab) added).getHeader());
 		
@@ -93,7 +110,7 @@ public class EditorTabManager extends JTabbedPane {
 		EditorTab toDelete = (EditorTab) getComponentAt(index);
 		
 		if(toDelete.hasDiff()) {
-			boolean accepted = DialogUtils.askConfirmation("Your unsaved changes will be lost. Still close this tab?", "Unsaved Changes");
+			boolean accepted = DialogUtils.askApprovation("Your unsaved changes will be lost. Still close this tab?", "Unsaved Changes");
 			if(!accepted) return;
 		}
 		
@@ -101,16 +118,19 @@ public class EditorTabManager extends JTabbedPane {
 		
 		tabs.values().remove(toDelete);
 		
+		revalidateTabComponents();
+	}
+	
+	private void revalidateTabComponents() {
 		// this keeps index part of the tab name updated
 		// example: there is two tabs with names like "New Document.txt" and "New Document.txt (1)"
 		// when user closes "New Document.txt", other tab now does not need to indicate its index with "(1)"
 		// so we should update its tab title with the same name of its opened file
 		for(EditorTab tab : tabs.values()) {
- 			if(getTabsWithFileName(tab.getOpenedFile().getName()).size() == 1) {
-				tab.setTitle(tab.getOpenedFile().getName());
-				int idx = indexOfComponent(tab);
-				if(idx >= 0) setTabComponentAt(idx, tab.getHeader());
-			}
+			int tabCountWithThisName = getTabsWithFileName(new File(tab.getFileHist().getOpenedFile()).getName()).size();
+			tab.setDuplicated(tabCountWithThisName > 1);
+			
+			if(indexOfTab(tab.getTitle()) != -1) setTabComponentAt(indexOfTab(tab.getTitle()), tab.getHeader());
 		}
 	}
 	
@@ -120,55 +140,52 @@ public class EditorTabManager extends JTabbedPane {
 	}
 	
 	
-	public EditorTab getTab(File file) {
+	@Override
+	public EditorTab getTab(FileHist file) {
 		return tabs.get(file);
 	}
 	
 	public List<EditorTab> getTabsWithFileName(String fileName) {
-		return tabs.values().stream().filter(tab -> tab.getOpenedFile().getName().equals(fileName)).toList();
+		return tabs.values().stream().filter(tab -> new File(tab.getFileHist().getOpenedFile()).getName().equals(fileName)).toList();
 	}
 	
+	@Override
 	public void setSelectedTab(EditorTab tab) {
 		this.setSelectedIndex(indexOfComponent(tab));
 	}
 	
-	private String makeTitleUnique(String title) {
-		String titleWithIndex = title + ".txt";
+	private String makeTitleUnique(String title, String extension) {
+		String titleWithIndex = title + extension;
 		int index = 0;
 		
 		while(existsWithFileName(titleWithIndex)) {
-			titleWithIndex = title + " (" + (++index) + ").txt";
+			titleWithIndex = title + " (" + (++index) + ")" + extension;
 		}
 		
 		return titleWithIndex;
 	}
 	
-	private String makeTitleUnique(File file) {
-		return existsWithFileName(file.getName()) ? file.getName() + " ("+ file.getAbsolutePath() +")" : file.getName();
-	}
-	
 	public boolean existsWithFileName(String fileName) {
-		return tabs.values().stream().anyMatch(tab -> tab.getOpenedFile().getName().equals(fileName));
+		return tabs.values().stream().anyMatch(tab -> new File(tab.getFileHist().getOpenedFile()).getName().equals(fileName));
 	}
 	
 	public void saveTab(EditorTab tab) {
-		log.info("saving " + tab.getOpenedFile().getAbsolutePath());
+		if(!tab.hasDiff()) return;
+		
+		log.info("saving " + tab.getFileHist().getOpenedFile());
 		
 		MainWindow.updateState(EditorState.SAVING);
 		
 		try {
-			File savedFile = tab.save();
+			FileHist savedFile = tab.save();
 			
 			if(savedFile != null) {
-				if(!tabs.containsKey(savedFile)) {
-					tabs.values().remove(tab);
-					tabs.put(savedFile, tab);
-					reloadTab(tab);
-				}
+				reloadTab(tab);
 				
-				log.info("saved to: " + savedFile.getAbsolutePath());
+				log.info("saved to: " + savedFile.getOpenedFile());
 			}
 			
+			revalidateTabComponents();
 		} catch(IOException ex) {
 			throw new CustomException(ex);
 		}
@@ -177,8 +194,117 @@ public class EditorTabManager extends JTabbedPane {
 	}
 	
 	public void reloadTab(EditorTab tab) throws IOException {
-		getSelectedComponent().reload(false);
-		if(tab.isTempFlag()) setTabComponentAt(indexOfComponent(tab), tab.getHeader());
+		log.info("reloading tab: " + tab.getTitle());
+		tab.reload(false);
 	}
 	
+	public void addDefaultDragListener(Editor editor) {
+		new DropTarget(editor, new DropTargetListener() {
+			@Override
+			public void dragEnter(DropTargetDragEvent dtde) {
+				log.info("drag entered: " + dtde.getSource());
+			}
+			
+			@Override
+			public void dragOver(DropTargetDragEvent dtde) {
+				// prints too much logs
+			}
+			
+			@Override
+			public void dropActionChanged(DropTargetDragEvent dtde) {
+				log.info("drop changed: " + dtde.getSource());
+			}
+			
+			@Override
+			public void dragExit(DropTargetEvent dte) {
+				log.info("drag exit: " + dte.getSource());
+			}
+			
+			@Override
+			public void drop(DropTargetDropEvent dtde) {
+				List<DataFlavor> droppedDataList = dtde.getCurrentDataFlavorsAsList();
+				
+				Transferable tr = dtde.getTransferable();
+				
+				for(DataFlavor data : droppedDataList) {
+					if(data.isFlavorJavaFileListType()) {
+						dtde.acceptDrop(DnDConstants.ACTION_COPY);
+						
+						try {
+							List<?> list = (List<?>) tr.getTransferData(data);
+							
+							if(list.size() != 1) {
+								dtde.dropComplete(false);
+								DialogUtils.showError("Multiple files are not allowed", "Cannot open files");
+								return;
+							}
+							
+							File file = (File) list.get(0);
+							
+							FileHist fileHist = HistoryCache.getByFile(file);
+							
+							if(fileHist == null) fileHist = new FileHist(file.getName(), file.getAbsolutePath());
+							
+							addTab(fileHist, false);
+							
+							dtde.dropComplete(true);
+						} catch(Exception e) {
+							dtde.dropComplete(false);
+						}
+					}
+				}
+			}
+		});
+	}
+	
+	@Override
+	public void addTabListener(TabListener eventListener) {
+		this.eventListeners.add(eventListener);
+	}
+	
+	@Override
+	public void removeTabListener(TabListener tabListener) {
+		this.eventListeners.remove(tabListener);
+	}
+	
+	@Override
+	public void clearTabListeners() {
+		this.eventListeners.clear();
+	}
+	
+	private void addDefaultListeners(Consumer<EditorTab> selectionHandler) {
+		this.addChangeListener(e -> {
+			EditorTabManager tabbedPane = (EditorTabManager) e.getSource();
+			
+			EditorTab selectedTab = tabbedPane.getSelectedComponent();
+			
+			if(selectedTab != null) {
+				log.info("selected tab: " + selectedTab.getTitle());
+				
+				selectedTab.getFileHist().setLastAccessDate(LocalDateTime.now().toString());
+				
+				try {
+					reloadTab(selectedTab);
+				} catch(IOException ex) {
+					throw new CustomException(ex);
+				}
+			}
+			
+			selectionHandler.accept(selectedTab);
+		});
+		
+		this.addTabListener(new TabListener() {
+			@Override
+			public void tabAdded(TabEvent e) {
+				EditorTab tab = (EditorTab) getComponentAt(indexOfTab(e.getTitle()));
+				tab.getFileHist().setLastAccessDate(LocalDateTime.now().toString());
+				HistoryCache.addIfAbsent(tab.getFileHist());
+			}
+			
+			@Override
+			public void tabRemoved(TabEvent e) {
+				// do some business
+			}
+		});
+	}
 }

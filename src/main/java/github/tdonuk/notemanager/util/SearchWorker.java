@@ -1,11 +1,11 @@
 package github.tdonuk.notemanager.util;
 
 import github.tdonuk.notemanager.exception.CustomException;
-import github.tdonuk.notemanager.gui.window.MainWindow;
 import github.tdonuk.notemanager.gui.component.Editor;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.util.SearchResult;
 import github.tdonuk.notemanager.gui.util.SearchUtils;
+import github.tdonuk.notemanager.gui.window.MainWindow;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

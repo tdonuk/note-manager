@@ -2,6 +2,8 @@ package github.tdonuk.notemanager.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import github.tdonuk.notemanager.constant.FileType;
+import github.tdonuk.notemanager.exception.CustomException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.w3c.dom.Document;
@@ -38,7 +40,7 @@ public class StringUtils {
 			xmlTransformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
 			xmlTransformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new CustomException(e);
 		}
 	}
 	
@@ -101,5 +103,13 @@ public class StringUtils {
 
 	public static <T> Object parseJSON(String json, Class<T> clazz) throws JsonProcessingException {
 		return objectMapper.readValue(json, clazz);
+	}
+	
+	public static String formatWithType(String text, FileType type) throws Exception {
+		return switch(type) {
+			case XML -> formatXml(text);
+			case JSON -> formatJson(text);
+			default -> text;
+		};
 	}
 }

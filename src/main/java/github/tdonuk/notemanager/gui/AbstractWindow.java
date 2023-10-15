@@ -21,16 +21,19 @@ public abstract class AbstractWindow extends JFrame {
 	protected abstract JMenuBar menu();
 	protected abstract String title();
 	
-	private JPanel mainPanel;
-	
-	protected void init() {
+	protected void initUI() {
 		this.setTitle(title());
 		this.setSize(3* EnvironmentUtils.screenWidth()/4, 3*EnvironmentUtils.screenHeight()/4);
 		this.setLocationRelativeTo(null); // to render the window at the center of the screen
 		this.setFont(Application.PRIMARY_FONT);
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		
-		mainPanel = new Panel(new BorderLayout(2, 2));
+		Panel mainPanel = new Panel(new BorderLayout()){
+			@Override
+			public void add(Component comp, Object constraints) {
+				if(comp != null) super.add(comp, constraints);
+			}
+		};
 		
 		this.setContentPane(mainPanel);
 		
@@ -99,21 +102,15 @@ public abstract class AbstractWindow extends JFrame {
 	// Window Events
 	
 	protected void beforeClosing(WindowEvent e) {
-		return;
 	}
 	protected void afterOpened(WindowEvent e) {
-		return;
 	}
 	protected void beforeMinimized(WindowEvent e) {
-		return;
 	}
 	protected void afterMaximized(WindowEvent e) {
-		return;
 	}
 	protected void focusGain(WindowEvent e) {
-		return;
 	}
 	protected void focusLost(WindowEvent e) {
-		return;
 	}
 }

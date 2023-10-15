@@ -13,6 +13,7 @@ public enum MenuShortcut {
 	// File Menu
 	NEW("CTRL + N", KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "newTab"),
 	OPEN("CTRL + T", KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK), "openFile"),
+	HISTORY("CTRL + T", KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), "showHistory"),
 	
 	// Edit Menu
 	SAVE("CTRL + S", KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), "save"),

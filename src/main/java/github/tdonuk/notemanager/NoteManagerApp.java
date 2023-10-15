@@ -1,10 +1,10 @@
 package github.tdonuk.notemanager;
 
-import github.tdonuk.notemanager.gui.window.MainWindow;
+import github.tdonuk.notemanager.domain.State;
 import github.tdonuk.notemanager.gui.constant.EditorState;
+import github.tdonuk.notemanager.gui.window.MainWindow;
 import github.tdonuk.notemanager.util.DialogUtils;
 import github.tdonuk.notemanager.util.EnvironmentUtils;
-import github.tdonuk.notemanager.util.StateDTO;
 import github.tdonuk.notemanager.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,10 +17,10 @@ public class NoteManagerApp {
 	public static void main(String[] args) {
 		try {
 			initUIStyle();
-			
 			initMainWindow();
 		} catch(Exception e) {
-			DialogUtils.showError("Error", "Unexpected state: " + e.getMessage());
+			log.error("application failure: " + e.getMessage(), e);
+			DialogUtils.showError("Unexpected state: " + e.getMessage(), "Error");
 		}
 	}
 	
@@ -36,6 +36,9 @@ public class NoteManagerApp {
 
 	private static void initMainWindow() {
 		MainWindow mainWindow = MainWindow.getInstance();
+		
+		// mainWindow.setExtendedState(mainWindow.getExtendedState()|JFrame.MAXIMIZED_BOTH); // fullscreen
+		
 		mainWindow.setVisible(true);
 
 		// state management
@@ -45,13 +48,13 @@ public class NoteManagerApp {
 
 			if(persistedStateFile.canRead()) {
 				log.info("found state file. app will be initialized with state.");
-				mainWindow.initializeWithState((StateDTO) StringUtils.parseJSON(Files.readString(persistedStateFile.toPath()), StateDTO.class));
+				mainWindow.initializeWithState((State) StringUtils.parseJSON(Files.readString(persistedStateFile.toPath()), State.class));
 			} else {
 				log.info("cannot found any state file. app will start with fresh state");
 				mainWindow.initializeWithoutState();
 			}
 		} catch (Exception e) {
-			log.error("cannot initialize with session. app will start with fresh state.");
+			log.error("cannot initialize with state. app will start with fresh state.");
 			mainWindow.initializeWithoutState();
 		}
 

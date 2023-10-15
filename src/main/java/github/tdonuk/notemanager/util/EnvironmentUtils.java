@@ -1,14 +1,17 @@
 package github.tdonuk.notemanager.util;
 
 import github.tdonuk.notemanager.exception.CustomException;
+import github.tdonuk.notemanager.gui.window.MainWindow;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.io.File;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Slf4j
 public final class EnvironmentUtils {
 	private static final Toolkit toolkit = Toolkit.getDefaultToolkit();
 	
@@ -29,7 +32,7 @@ public final class EnvironmentUtils {
 	}
 	
 	public static void copyToClipboard() {
-		// TODO
+		// Complete this stub
 	}
 	
 	public static void beep() {
@@ -76,5 +79,15 @@ public final class EnvironmentUtils {
 
 	public static String stateFileDir() {
 		return appDataDir() + File.separator + "state.json";
+	}
+	
+	public static String tempFilesDir() {
+		return appDataDir() + File.separator + "temp";
+	}
+	
+	public static void shutdown() {
+		log.info("application shutdown");
+		MainWindow.getInstance().dispose();
+		System.exit(-1);
 	}
 }

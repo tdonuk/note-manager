@@ -1,30 +1,36 @@
 package github.tdonuk.notemanager.gui.window;
 
 import github.tdonuk.notemanager.constant.Application;
+import github.tdonuk.notemanager.domain.FileHist;
+import github.tdonuk.notemanager.domain.State;
 import github.tdonuk.notemanager.exception.CustomException;
 import github.tdonuk.notemanager.gui.AbstractWindow;
 import github.tdonuk.notemanager.gui.component.Editor;
+import github.tdonuk.notemanager.gui.component.EditorScrollPane;
 import github.tdonuk.notemanager.gui.component.EditorTabManager;
 import github.tdonuk.notemanager.gui.constant.EditorState;
 import github.tdonuk.notemanager.gui.constant.MenuShortcut;
 import github.tdonuk.notemanager.gui.container.EditorTab;
 import github.tdonuk.notemanager.gui.container.Panel;
+import github.tdonuk.notemanager.gui.dialog.HistoryDialog;
 import github.tdonuk.notemanager.gui.fragment.SearchPanel;
 import github.tdonuk.notemanager.util.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
 
 @Slf4j
 public final class MainWindow extends AbstractWindow {
@@ -36,12 +42,18 @@ public final class MainWindow extends AbstractWindow {
 	private final JLabel totalCharactersLabel = new JLabel("0");
 	private final JLabel selectedTextLabel = new JLabel("0");
 	
+	private final JLabel currentFileLabel = new JLabel();
+	
 	private SearchPanel searchBar;
 	private JTextField searchField;
 	
 	private final JProgressBar progressBar = new JProgressBar();
 	
 	private EditorTabManager tabManager;
+	
+	public MainWindow() {
+		initUI();
+	}
 	
 	@Override
 	protected String title() {
@@ -74,17 +86,12 @@ public final class MainWindow extends AbstractWindow {
 	protected JComponent south() {
 		JPanel southPanel = new Panel(new BorderLayout());
 		
-		southPanel.setBorder(null);
+		southPanel.setMaximumSize(new Dimension(getWidth(), 1));
 		
-		String osInfo = EnvironmentUtils.osName() + " - "+EnvironmentUtils.osArch();
-		String versionInfo = "v"+Application.VERSION;
-		
-		String systemInfo = versionInfo + " ("+osInfo+")";
-		
-		JLabel systemInfoLabel = new JLabel(systemInfo);
+		southPanel.setBorder(new LineBorder(Color.gray, 1));
 		
 		JPanel southWestPanel = new Panel();
-		southWestPanel.add(systemInfoLabel);
+		southWestPanel.add(currentFileLabel);
 		
 		JPanel southEastPanel = new Panel();
 		
@@ -99,20 +106,20 @@ public final class MainWindow extends AbstractWindow {
 		progressBarPanel.add(progressBar);
 		
 		southEastPanel.add(statusLabel);
-		statusLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+		statusLabel.setBorder(new EmptyBorder(0, 5, 0, 5));
 		
 		southEastPanel.add(selectedTextLabel);
-		selectedTextLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+		selectedTextLabel.setBorder(new EmptyBorder(0, 5, 0, 5));
 
 		southEastPanel.add(currentPositionLabel);
 		currentPositionLabel.setBorder(new EmptyBorder(0, 5, 0, 5));
 		currentPositionLabel.setToolTipText("Current position");
 		
 		southEastPanel.add(totalLinesLabel);
-		totalLinesLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+		totalLinesLabel.setBorder(new EmptyBorder(0, 5, 0, 5));
 		
 		southEastPanel.add(totalCharactersLabel);
-		totalCharactersLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+		totalCharactersLabel.setBorder(new EmptyBorder(0, 5, 0, 5));
 		
 		southPanel.add(southWestPanel, BorderLayout.WEST);
 		southPanel.add(southEastPanel, BorderLayout.EAST);
@@ -124,12 +131,12 @@ public final class MainWindow extends AbstractWindow {
 	
 	@Override
 	protected JComponent east() {
-		return new Panel();
+		return null;
 	}
 	
 	@Override
 	protected JComponent west() {
-		return new Panel();
+		return null;
 	}
 	
 	@Override
@@ -137,15 +144,11 @@ public final class MainWindow extends AbstractWindow {
 		JPanel centerPanel = new Panel(new BorderLayout());
 		centerPanel.setBorder(null);
 		
-		tabManager = new EditorTabManager();
+		Consumer<EditorTab> tabSelectionHandler = editorTab -> {
+			if(editorTab != null) currentFileLabel.setText(editorTab.getFileHist().getOpenedFile());
+		};
 		
-		if(tabManager.getTabs().isEmpty()) {
-			try {
-				createTab("New Document");
-			} catch(IOException e) {
-				throw new CustomException(e);
-			}
-		}
+		tabManager = new EditorTabManager(tabSelectionHandler);
 		
 		centerPanel.add(tabManager);
 		
@@ -179,32 +182,43 @@ public final class MainWindow extends AbstractWindow {
 		
 		boolean exitFlag = true;
 		if(stringJoiner.length() != 0) {
-			exitFlag = DialogUtils.askConfirmation(stringJoiner + "\nYour unsaved changes in above tabs will be lost. Do you want to continue?", "Unsaved Changes");
+			exitFlag = DialogUtils.askApprovation(stringJoiner + "\nYour unsaved changes in above tabs will be lost. Do you want to continue?", "Unsaved Changes");
 		}
 		
 		if(exitFlag) {
 			try {
-				StateDTO state = new StateDTO();
-				List<FileHistDTO> fileHists = tabManager.getTabs().values().stream().filter(t -> !t.isTempFlag()).map(t -> new FileHistDTO(t.getTitle(), t.getOpenedFile().getAbsolutePath())).toList();
-				state.setOpenedFiles(fileHists);
+				if(tabManager.getTabs().isEmpty()) {
+					Files.deleteIfExists(Paths.get(EnvironmentUtils.stateFileDir()));
+					
+					EnvironmentUtils.shutdown();
+				}
+				
+				EditorTab selectedTab = tabManager.getSelectedComponent();
+				
+				State state = new State();
+				List<FileHist> fileHists = tabManager.getTabs().values().stream().map(EditorTab::getFileHist).toList();
+				state.setCurrentTabs(fileHists);
+				state.setSelectedTab(tabManager.getSelectedComponent().getFileHist());
+				state.setHistory(HistoryCache.get().stream().sorted(Comparator.comparing(FileHist::getLastAccessDate).reversed()).limit(30).toList());
+				state.setCaretPosition(selectedTab.getEditorContainer().getEditorPane().getEditor().getCaretPosition());
+				state.setScrollValue(selectedTab.getEditorContainer().getEditorPane().getVerticalScrollBar().getValue());
 				state.setLeaveDate(LocalDateTime.now().toString());
 
 				FileUtils.writeFile(EnvironmentUtils.stateFileDir(), StringUtils.stringifyToJSON(state));
-
-				e.getWindow().dispose();
-				System.exit(0);
+				
+				EnvironmentUtils.shutdown();
 			} catch(Exception exc) {
-				exc.printStackTrace(); // TODO: implement some logging instead
-
-				e.getWindow().dispose();
-				System.exit(0);
+				log.error("exception happened while saving the app state: " + exc.getMessage(), exc);
+				EnvironmentUtils.shutdown();
 			}
 		}
 	}
 	
 	@Override
 	protected void afterOpened(WindowEvent e) {
-		tabManager.getTabs().values().stream().findAny().orElseThrow(() -> new RuntimeException("app failed to start")).getEditorContainer().getEditorPane().getEditor().requestFocus(); // open window as focused to editor and ready-to-write
+		if(!tabManager.getTabs().isEmpty()) {
+			tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor().requestFocus(); // open window as focused to editor and ready-to-write
+		}
 	}
 	
 	@Override
@@ -261,7 +275,7 @@ public final class MainWindow extends AbstractWindow {
 		menuItemNew.addActionListener(e -> {
 			
 			try {
-				createTab("New Document");
+				createTab(null, true);
 			} catch(IOException ex) {
 				throw new CustomException(ex);
 			}
@@ -275,13 +289,38 @@ public final class MainWindow extends AbstractWindow {
 			
 			if(file != null) {
 				try {
-					createTab(file);
+					FileHist fileHist = HistoryCache.getByFile(file);
+					if(fileHist == null) fileHist = new FileHist(file.getName(), file.getAbsolutePath());
+					
+					createTab(fileHist, false);
 				} catch(Exception ex) {
 					JOptionPane.showMessageDialog(this,"Cannot read file: " + ex.getMessage());
 				}
 			}
 			
 			updateState(EditorState.READY);
+		});
+		
+		JMenuItem menuItemHistory = new JMenuItem("History");
+		menuItemHistory.setAccelerator(MenuShortcut.HISTORY.getKeyStroke());
+		menuItemHistory.addActionListener(e -> {
+			log.info("opening history dialog");
+			requestFocus();
+			
+			HistoryDialog historyDialog = new HistoryDialog(MouseInfo.getPointerInfo().getLocation(), fileHist -> {
+				if(tabManager.getTabs().get(fileHist) != null) {
+					tabManager.setSelectedTab(tabManager.getTabs().get(fileHist));
+				} else {
+					try {
+						createTab(fileHist, false);
+					} catch(IOException ex) {
+						throw new CustomException(ex);
+					}
+				}
+			});
+			historyDialog.requestFocus();
+			
+			historyDialog.setVisible(true);
 		});
 		
 		JMenuItem menuItemSave = new JMenuItem("Save");
@@ -291,6 +330,7 @@ public final class MainWindow extends AbstractWindow {
 		fileMenu.add(menuItemNew);
 		fileMenu.add(menuItemOpen);
 		fileMenu.add(menuItemSave);
+		fileMenu.add(menuItemHistory);
 	}
 	
 	public static MainWindow getInstance() {
@@ -317,22 +357,8 @@ public final class MainWindow extends AbstractWindow {
 		selectedTextLabel.setText("Sel: "+selectedTextSize);
 	}
 	
-	private EditorTab createTab(File file) throws IOException {
-		EditorTab tab = tabManager.addTab(file);
-		
-		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
-
-		addDefaultDragListener(editor);
-		
-		editor.addCaretListener(c -> updatePositionInformation(editor));
-		
-		tabManager.setSelectedTab(tab);
-		
-		return tab;
-	}
-	
-	private EditorTab createTab(String title) throws IOException {
-		EditorTab tab = tabManager.addTab(title);
+	private EditorTab createTab(FileHist file, boolean isTemporary) throws IOException {
+		EditorTab tab = tabManager.addTab(file, isTemporary);
 		
 		Editor editor = tab.getEditorContainer().getEditorPane().getEditor();
 		
@@ -342,81 +368,30 @@ public final class MainWindow extends AbstractWindow {
 		
 		return tab;
 	}
-	
-	private void addDefaultDragListener(JComponent component) {
-		new DropTarget(component, new DropTargetListener() {
-			@Override
-			public void dragEnter(DropTargetDragEvent dtde) {
-				log.info("drag entered: " + dtde.getSource());
-				updateState(EditorState.WAITING);
-			}
-			
-			@Override
-			public void dragOver(DropTargetDragEvent dtde) {
-				// prints too much logs
-			}
-			
-			@Override
-			public void dropActionChanged(DropTargetDragEvent dtde) {
-				log.info("drop changed: " + dtde.getSource());
-			}
-			
-			@Override
-			public void dragExit(DropTargetEvent dte) {
-				log.info("drag exit: " + dte.getSource());
-				updateState(EditorState.READY);
-			}
-			
-			@Override
-			public void drop(DropTargetDropEvent dtde) {
-				List<DataFlavor> droppedDataList = dtde.getCurrentDataFlavorsAsList();
-				
-				Transferable tr = dtde.getTransferable();
-				
-				for(DataFlavor data : droppedDataList) {
-					if(data.isFlavorJavaFileListType()) {
-						dtde.acceptDrop(DnDConstants.ACTION_COPY);
-						
-						try {
-							List<?> list = (List<?>) tr.getTransferData(data);
-							
-							if(list.size() != 1) {
-								dtde.dropComplete(false);
-								DialogUtils.showError("Multiple files are not allowed", "Cannot open files");
-								return;
-							}
-							
-							File file = (File) list.get(0);
-							
-							createTab(file);
-							
-							dtde.dropComplete(true);
-						} catch(Exception e) {
-							dtde.dropComplete(false);
-						}
-					}
-				}
-				updateState(EditorState.READY);
-			}
-		});
+
+	public void initializeWithState(State state) throws IOException {
+		for(FileHist fileHist: state.getCurrentTabs()) {
+			createTab(fileHist, false);
+		}
 		
-		for(Component child : component.getComponents()) {
-			addDefaultDragListener((JComponent) child);
+		for(EditorTab tab : tabManager.getTabs().values()) {
+			if(state.getSelectedTab().getOpenedFile().equals(tab.getFileHist().getOpenedFile())) {
+				tabManager.setSelectedComponent(tab);
+				
+				EditorScrollPane scrollPane = tabManager.getSelectedComponent().getEditorContainer().getEditorPane();
+				
+				scrollPane.getEditor().setCaretPosition(state.getCaretPosition());
+				scrollPane.getViewport().setViewPosition(new Point(0, state.getScrollValue()));
+				
+				scrollPane.getEditor().requestFocus();
+			}
 		}
-	}
-
-	public void initializeWithState(StateDTO state) throws IOException {
-		initializeWithoutState();
-
-		tabManager.removeAll();
-
-		for(FileHistDTO fileHist: state.getOpenedFiles()) {
-			createTab(new File(fileHist.getOpenedFile()));
-		}
+		
+		tabManager.getSelectedComponent().getEditorContainer().getEditorPane().getEditor().requestFocus();
 	}
 
 	public void initializeWithoutState() {
-		init();
+		// add an empty  tab if it is required
 	}
 	
 }
