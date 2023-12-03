@@ -70,6 +70,9 @@ public final class EnvironmentUtils {
 			String xdgDataHome = System.getenv("XDG_DATA_HOME");
 
 			path = StringUtils.isBlank(xdgDataHome) ? userDir() + File.separator + ".local" + File.separator + "share" : xdgDataHome;
+		} else if (osName.startsWith("Mac OS X")) {
+
+			path = userDir() + File.separator + "Library" + File.separator + "Application Support";
 		} else {
 			throw new CustomException("os not supported: " + osName);
 		}
