@@ -13,13 +13,13 @@ public final class FileUtils {
     public static boolean writeFile(String path, String content) throws IOException {
         File file = new File(path);
 
-        if(!file.canRead()) file.getParentFile().mkdirs();
+        if (!file.canRead()) file.getParentFile().mkdirs();
 
         file.createNewFile();
 
-        if(!file.canRead()) throw new CustomException("cannot create file: " + path);
+        if (!file.canRead()) throw new CustomException("cannot create file: " + path);
 
-        Files.writeString(file.toPath(),content);
+        Files.writeString(file.toPath(), content);
 
         return true;
     }
